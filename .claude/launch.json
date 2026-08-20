@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tera-case",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8123", "--directory", "tera-brand-system"],
+      "port": 8123
+    },
+    {
+      "name": "tera-refs",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8129", "--directory", "tera-brand-system"],
+      "port": 8129
+    }
+  ]
+}

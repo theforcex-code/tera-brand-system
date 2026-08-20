@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 2.0 544.2842712474619 248">
+  <defs>
+    <linearGradient id="plasma" x1="0%" y1="0%" x2="100%" y2="22%">
+      <stop offset="0.00" stop-color="#F0529C"/><stop offset="0.33" stop-color="#FF6B2C"/><stop offset="0.67" stop-color="#35D06E"/><stop offset="1.00" stop-color="#31C4FF"/>
+      <animateTransform attributeName="gradientTransform" type="translate"
+        values="0 0; -0.18 0; 0 0" dur="9s" repeatCount="indefinite"/>
+    </linearGradient>
+    <filter id="fluxo">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.028" numOctaves="2" seed="7">
+        <animate attributeName="baseFrequency" dur="14s" repeatCount="indefinite"
+          values="0.012 0.028; 0.016 0.02; 0.012 0.028"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" scale="34"/>
+    </filter>
+    <mask id="vao">
+      <rect x="-40" y="2.0" width="544.2842712474619" height="248" fill="black"/>
+      <path d="M 12.00 52.00 L 12.00 150.00 M 12.00 150.00 A 40.0 40.0 0 0 0 88.54 166.27 M 2.00 110.00 L 98.00 110.00 M 214.00 150.00 A 40.0 40.0 0 1 0 196.94 182.77 M 134.00 150.00 L 214.00 150.00 M 190.00 38.00 L 190.00 78.00 M 244.00 200.00 L 244.00 150.00 M 244.00 150.00 A 40.0 40.0 0 1 1 312.28 178.28 M 392.28 110.00 A 40.0 40.0 0 0 0 392.28 190.00 M 392.28 190.00 A 40.0 40.0 0 0 0 392.28 110.00 M 442.28 100.00 L 442.28 200.00" fill="none" stroke="white" stroke-width="20" stroke-linecap="butt"/>
+    </mask>
+  </defs>
+  <rect x="-40" y="2.0" width="544.2842712474619" height="248" fill="#0A0908"/>
+  <g mask="url(#vao)">
+    <rect x="-40" y="2.0" width="544.2842712474619" height="248" fill="#120e14"/>
+    <g filter="url(#fluxo)">
+      <rect x="-80" y="-38.0" width="624.2842712474619" height="328"
+        fill="url(#plasma)" opacity="0.95"/>
+    </g>
+  </g>
+</svg>

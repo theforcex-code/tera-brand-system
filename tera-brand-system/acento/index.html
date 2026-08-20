@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TÉRA — Lab 01 · O Acento</title>
+<style>
+/* Lab 01 · O Acento. 10 posições motion-first pra fresta do É.
+   Regra: o acento tem a MESMA grossura da barra do E, medida do glyph real. */
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('../case/fonts/Archivo-Variable.ttf?v=1') format('truetype-variations');
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Archivo Exp';
+  src: url('../case/fonts/Archivo-ExpBlack.ttf?v=1') format('truetype');
+  font-weight: 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../case/fonts/SpaceMono-Regular.ttf?v=1') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../case/fonts/SpaceMono-Bold.ttf?v=1') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --black: #09090b;
+  --paper: #efeee8;
+  --white: #f8f7f2;
+  --silver: #a6a6aa;
+  --grey: #7d7d82;
+  --plasma-a: #4867ff;
+  --plasma-b: #b657ff;
+  --plasma-c: #ff4f72;
+  --plasma-d: #f0b34b;
+  --plasma-strip: linear-gradient(90deg,
+    var(--plasma-a) 0 25%, var(--plasma-b) 25% 50%,
+    var(--plasma-c) 50% 75%, var(--plasma-d) 75% 100%);
+  --pad: clamp(16px, 3vw, 44px);
+  --ease-seco: cubic-bezier(0.85, 0, 0.15, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: 'Archivo', sans-serif;
+  font-variation-settings: 'wdth' 100, 'wght' 400;
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mono {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(10px, 0.75vw, 12px);
+  letter-spacing: 0.04em;
+}
+
+/* ---------- nav ---------- */
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px var(--pad) 12px;
+  flex: none;
+}
+.wm {
+  font-family: 'Archivo', sans-serif;
+  font-variation-settings: 'wdth' 125, 'wght' 900;
+  text-transform: uppercase;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  color: inherit;
+  display: inline-block;
+  padding-top: 0.3em;
+  font-size: 22px;
+}
+.wm__e { position: relative; display: inline-block; }
+.wm__e::before {
+  content: '';
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: -0.24em;
+  height: 0.1em;
+  background: var(--plasma-strip);
+  background-size: 16px 100%;
+  image-rendering: pixelated;
+}
+.nav__meta { color: var(--grey); }
+.nav__meta:last-child { text-align: right; }
+@media (max-width: 767px) { .nav__meta:last-child { display: none; } }
+
+/* ---------- palco ---------- */
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  cursor: crosshair;
+}
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.readout {
+  position: absolute;
+  top: 14px;
+  left: var(--pad);
+  color: var(--grey);
+  pointer-events: none;
+  white-space: pre-line;
+}
+.hint {
+  position: absolute;
+  bottom: 14px;
+  right: var(--pad);
+  color: var(--grey);
+  pointer-events: none;
+  text-align: right;
+}
+.observe {
+  position: absolute;
+  bottom: 14px;
+  left: var(--pad);
+  color: var(--white);
+  pointer-events: none;
+}
+
+/* ---------- dock: rail + justificativa ---------- */
+
+.dock {
+  flex: none;
+  background: var(--paper);
+  color: var(--black);
+}
+.rail {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid rgba(10, 10, 12, 0.15);
+}
+.rail button {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(9px, 0.72vw, 12px);
+  letter-spacing: 0.03em;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid rgba(10, 10, 12, 0.15);
+  color: var(--grey);
+  padding: 12px 0 11px;
+  cursor: pointer;
+  flex: 1 1 10%;
+  min-width: 84px;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+.rail button:hover { color: var(--black); }
+.rail button.on { background: var(--black); color: var(--white); }
+.rail button b { font-weight: 700; margin-right: 6px; }
+.rail button b::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  background: rgba(10, 10, 12, 0.18);
+  vertical-align: 6%;
+}
+.rail button.on b::before { background: var(--plasma-strip); image-rendering: pixelated; }
+
+.panel {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(0, 2.1fr) minmax(150px, 1.1fr);
+  gap: clamp(16px, 3vw, 44px);
+  padding: 18px var(--pad) 22px;
+  align-items: start;
+}
+.panel__head { color: var(--grey); }
+.panel__head strong { color: var(--black); display: block; font-size: clamp(13px, 1.05vw, 16px); margin-top: 5px; }
+.panel__spec { margin-top: 10px; color: var(--grey); white-space: pre-line; }
+.panel__just {
+  font-size: clamp(14px, 1.25vw, 19px);
+  font-variation-settings: 'wdth' 108, 'wght' 560;
+  line-height: 1.36;
+  letter-spacing: -0.01em;
+  max-width: 62ch;
+}
+.panel__wgsn { color: var(--grey); }
+.panel__wgsn strong { color: var(--black); }
+.panel__wgsn::before {
+  content: 'TENDÊNCIA';
+  display: block;
+  margin-bottom: 6px;
+  color: var(--grey);
+}
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  .stage { min-height: 56svh; flex: none; }
+  .panel { grid-template-columns: 1fr; gap: 12px; }
+  .rail button { min-width: 20%; }
+}
+
+/* ---------- modo estático (QA / reduced motion) ---------- */
+
+html.static *, html.static *::before, html.static *::after {
+  transition: none !important;
+  animation: none !important;
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="wm" href="../case/">T<span class="wm__e">E</span>RA</a>
+  <div class="nav__meta mono">LAB 01 · O ACENTO — 10 POSIÇÕES, 1 GROSSURA</div>
+  <div class="nav__meta mono">MATA SÃO PAULO<br>ARCHIVO EXP BLACK 900 / 125</div>
+</header>
+
+<main class="stage" id="stage">
+  <canvas id="cv"></canvas>
+  <div class="readout mono" id="readout">MEDINDO O GLYPH…</div>
+  <div class="observe mono" id="observe"></div>
+  <div class="hint mono">CLIQUE AVANÇA · ← → NAVEGAM · 1–9 E 0 SELECIONAM<br>NA POSIÇÃO 09 O CURSOR TOCA O ACENTO · NA 10 O CLIQUE OBSERVA</div>
+</main>
+
+<section class="dock">
+  <nav class="rail" id="rail"></nav>
+  <div class="panel">
+    <div class="panel__head mono">
+      POSIÇÃO <span id="pNum">01</span> / 10
+      <strong id="pName"></strong>
+      <div class="panel__spec" id="pSpec"></div>
+    </div>
+    <p class="panel__just" id="pJust"></p>
+    <div class="panel__wgsn mono" id="pWgsn"></div>
+  </div>
+</section>
+
+<script>
+/* Lab do acento. Nada aparece por fade: todo estado troca por abertura (scaleX). */
+
+const BLACK = '#09090b';
+const WHITE = '#f8f7f2';
+const GREY = '#7d7d82';
+const PLASMA4 = ['#4867ff', '#b657ff', '#ff4f72', '#f0b34b'];
+
+const params = new URLSearchParams(location.search);
+const QA = params.has('qa');
+const RM = QA || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (RM) document.documentElement.classList.add('static');
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+const eo = (x) => 1 - Math.pow(2, -10 * Math.min(Math.max(x, 0), 1)); // expo out, seco
+const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
+const clamp01 = (x) => clamp(x, 0, 1);
+
+/* ---------- medição do glyph: a grossura do acento vem do próprio E ---------- */
+/* canvas ignora eixos variáveis: mede na instância estática Archivo Exp Black  */
+
+let MX = null; // métricas em fração do EM
+
+function measureE() {
+  const M = 400;
+  const probe = document.createElement('canvas');
+  let g = probe.getContext('2d', { willReadFrequently: true });
+  g.font = `900 ${M}px "Archivo Exp"`;
+  const adv = g.measureText('E').width;
+  probe.width = Math.ceil(adv + M * 0.5);
+  probe.height = Math.ceil(M * 1.4);
+  g = probe.getContext('2d', { willReadFrequently: true });
+  g.font = `900 ${M}px "Archivo Exp"`;
+  g.textBaseline = 'alphabetic';
+  g.fillStyle = '#fff';
+  const penX = Math.round(M * 0.24);
+  const base = Math.round(M * 1.05);
+  g.fillText('E', penX, base);
+
+  const { data, width: W, height: H } = g.getImageData(0, 0, probe.width, probe.height);
+  const on = (x, y) => data[(y * W + x) * 4 + 3] > 120;
+
+  let top = -1, bot = -1, left = -1, right = -1;
+  for (let y = 0; y < H && top < 0; y++) for (let x = 0; x < W; x++) if (on(x, y)) { top = y; break; }
+  for (let y = H - 1; y >= 0 && bot < 0; y--) for (let x = 0; x < W; x++) if (on(x, y)) { bot = y; break; }
+  for (let x = 0; x < W && left < 0; x++) for (let y = 0; y < H; y++) if (on(x, y)) { left = x; break; }
+  for (let x = W - 1; x >= 0 && right < 0; x--) for (let y = 0; y < H; y++) if (on(x, y)) { right = x; break; }
+
+  // scanline vertical a 78% da mancha: os três braços horizontais do E
+  const sx = Math.round(left + (right - left) * 0.78);
+  const runs = [];
+  let inRun = false, y0 = 0;
+  for (let y = top; y <= bot + 1; y++) {
+    const v = y <= bot && on(sx, y);
+    if (v && !inRun) { inRun = true; y0 = y; }
+    else if (!v && inRun) { inRun = false; runs.push({ y0, y1: y - 1 }); }
+  }
+
+  // fallback defensivo: se a fonte não carregou, usa proporções aproximadas do Black
+  if (runs.length < 3) {
+    return {
+      capR: 0.72, barR: 0.148, stemR: 0.16, glyphL: 0.1, glyphW: 0.62, advR: 0.8,
+      midBarCenterR: 0.38, counterYR: 0.2, stemRightR: 0.26, medida: false,
+    };
+  }
+
+  // scanline horizontal no vão superior: cruza só a haste vertical
+  const cy = Math.round((runs[0].y1 + runs[1].y0) / 2);
+  let x0 = -1, x1 = -1;
+  for (let x = left; x <= right; x++) if (on(x, cy)) { if (x0 < 0) x0 = x; x1 = x; }
+
+  return {
+    capR: (bot - top + 1) / M,
+    barR: (runs[1].y1 - runs[1].y0 + 1) / M,          // barra do meio = grossura do acento
+    stemR: (x1 - x0 + 1) / M,                          // haste vertical
+    glyphL: (left - penX) / M,
+    glyphW: (right - left + 1) / M,
+    advR: adv / M,
+    midBarCenterR: ((runs[1].y0 + runs[1].y1) / 2 - top) / M, // do topo da caixa-alta
+    counterYR: (cy - top) / M,
+    stemRightR: (x1 + 1 - penX) / M,
+    medida: true,
+  };
+}
+
+/* ---------- fresta: unidade de plasma pixelado, sempre com a grossura da barra ---------- */
+
+function fresta(ctx, x, y, w, h, tMs, alpha = 1) {
+  if (w <= 0.5 || h <= 0) return;
+  const cell = Math.max(4, h * 1.4);
+  const n = Math.max(1, Math.ceil(w / cell));
+  const shift = Math.floor(tMs / 460);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = PLASMA4[(i + shift) % 4];
+    ctx.fillRect(x + i * cell, y, Math.min(cell + 0.5, w - i * cell), h);
+  }
+  ctx.restore();
+}
+
+/* ---------- palco ---------- */
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let W = 0, H = 0;
+
+function resize() {
+  const r = cv.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  cv.width = Math.round(r.width * DPR);
+  cv.height = Math.round(r.height * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  W = r.width;
+  H = r.height;
+  if (RM) drawStatic();
+}
+new ResizeObserver(resize).observe(cv);
+
+// geometria do wordmark no frame corrente
+function layout() {
+  const s = Math.min(W / 5.2, H * 0.42);
+  ctx.font = `900 ${s}px "Archivo Exp"`;
+  ctx.textBaseline = 'alphabetic';
+  const letters = ['T', 'E', 'R', 'A'];
+  const track = -0.025 * s;
+  const widths = letters.map((l) => ctx.measureText(l).width);
+  const total = widths.reduce((a, b) => a + b, 0) + track * 3;
+  const baseline = H / 2 + (s * MX.capR) / 2;
+  const capTop = baseline - s * MX.capR;
+  const xs = [];
+  let x = (W - total) / 2;
+  letters.forEach((l, i) => { xs.push(x); x += widths[i] + track; });
+  const eX = xs[1] + MX.glyphL * s;           // início da mancha do E
+  const eW = MX.glyphW * s;                    // largura da mancha (os braços)
+  const accH = MX.barR * s;                    // GROSSURA DO ACENTO = barra do E
+  return { s, letters, widths, xs, baseline, capTop, eX, eW, accH };
+}
+
+// desenha o wordmark; split = { y, gap, all } abre a letra (ou a palavra) na altura y
+function word(G, split) {
+  ctx.font = `900 ${G.s}px "Archivo Exp"`;
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = WHITE;
+  G.letters.forEach((l, i) => {
+    const isSplit = split && split.gap > 0.5 && (split.all || i === 1);
+    if (!isSplit) { ctx.fillText(l, G.xs[i], G.baseline); return; }
+    const pad = G.s * 0.08;
+    // metade de cima, deslocada pra cima
+    ctx.save();
+    ctx.translate(0, -split.gap / 2);
+    ctx.beginPath();
+    ctx.rect(G.xs[i] - pad, -G.s, G.widths[i] + pad * 2, G.s + split.y);
+    ctx.clip();
+    ctx.fillText(l, G.xs[i], G.baseline);
+    ctx.restore();
+    // metade de baixo, deslocada pra baixo
+    ctx.save();
+    ctx.translate(0, split.gap / 2);
+    ctx.beginPath();
+    ctx.rect(G.xs[i] - pad, split.y, G.widths[i] + pad * 2, H);
+    ctx.clip();
+    ctx.fillText(l, G.xs[i], G.baseline);
+    ctx.restore();
+  });
+}
+
+// abertura padrão da fresta: cresce do centro, sem fade
+function abre(G, x, y, w, t, p, alpha = 1) {
+  fresta(ctx, x + (w * (1 - p)) / 2, y, w * p, G.accH, t, alpha);
+}
+
+/* ---------- as 10 posições ---------- */
+/* cada posição é um comportamento: o frame desenha letras + acento no tempo t */
+
+const STATES = [
+  {
+    nome: 'ORTOGRÁFICO',
+    spec: 'Y = CAIXA − 0.24 EM\nL = BRAÇOS DO E · H = BARRA',
+    just: 'A posição canônica do agudo. A fresta assume o lugar exato que a língua reserva ao acento: a marca abre onde a palavra manda abrir. Este é o frame-herói do sistema — toda versão estática da Téra é este instante congelado do movimento.',
+    wgsn: '<strong>MOTION-FIRST / HERO FRAME.</strong> Em 2026 o logo nasce em movimento e o estático é derivado — um frame extraído da sequência cinética.',
+    frame(G, t, p) {
+      word(G);
+      abre(G, G.eX, G.capTop - 0.24 * G.s, G.eW, t, p);
+    },
+  },
+  {
+    nome: 'ZENITAL',
+    spec: 'Y = CAIXA − 0.52 EM\nL = 1.3 × BRAÇOS DO E',
+    just: 'A luz desce do urdimento. Descolado da letra, o acento vira arquitetura de palco: a primeira luz que acende sobre a sala antes de qualquer espetáculo. O silêncio em volta é o que dá presença.',
+    wgsn: '<strong>QUIET MOTION.</strong> Micro-movimento discreto e acessível: a marca respira sem gritar, tendência de motion calmo mapeada pra 2026.',
+    frame(G, t, p) {
+      word(G);
+      const w = G.eW * 1.3;
+      const x = G.eX + G.eW / 2 - w / 2;
+      const blinkOff = !RM && t % 3600 > 3440 && t % 3600 < 3540; // pisca: liga/desliga, não fade
+      if (!blinkOff) abre(G, x, G.capTop - 0.52 * G.s, w, t, p);
+    },
+  },
+  {
+    nome: 'QUARTO BRAÇO',
+    spec: 'Y = CAIXA − BARRA (VÃO ZERO)\nL = BRAÇOS DO E · H = BARRA',
+    just: 'Encostado no topo, o acento deixa de ser diacrítico e vira o quarto braço do E — a mesma grossura das três barras da letra, medida do próprio glyph. A luz não decora a tipografia: é estrutural, tem o peso da matéria.',
+    wgsn: '<strong>KINETIC TYPE.</strong> O tipo como estrutura viva: letras que incorporam o movimento na própria anatomia, não como enfeite por cima.',
+    frame(G, t, p) {
+      word(G);
+      const x = G.eX;
+      const y = G.capTop - G.accH;
+      // abre da esquerda, como os braços da letra são desenhados
+      fresta(ctx, x, y, G.eW * p, G.accH, t);
+      // um ponto de luz percorre o braço: a letra sendo redesenhada
+      if (p >= 1 && !RM) {
+        const cell = Math.max(4, G.accH * 1.4);
+        const k = Math.floor(t / 240) % Math.ceil(G.eW / cell);
+        ctx.fillStyle = WHITE;
+        ctx.fillRect(x + k * cell, y, Math.min(cell, G.eW - k * cell), G.accH);
+      }
+    },
+  },
+  {
+    nome: 'CORTE',
+    spec: 'Y = BARRA DO MEIO DO E\nA LETRA ABRE EM DUAS',
+    just: 'A fresta atravessa o É no eixo da barra do meio e a letra se abre em duas. Abrir é cortar: a caixa de superposição mora dentro da própria letra, e o É é a única letra habitada da palavra.',
+    wgsn: '<strong>ORGANIC MORPHING.</strong> Letterforms que se transformam e se reconstroem — a letra deixa de ser um desenho fixo e vira um objeto com interior.',
+    frame(G, t, p) {
+      const splitY = G.capTop + MX.midBarCenterR * G.s;
+      // respiração em degraus: o vão pulsa seco, sem interpolar
+      const step = RM ? 1 : [1, 1.25, 1, 0.75][Math.floor(t / 900) % 4];
+      const gap = G.accH * 1.6 * p * step;
+      word(G, { y: splitY, gap });
+      abre(G, G.eX, splitY - G.accH / 2, G.eW, t, p);
+    },
+  },
+  {
+    nome: 'HORIZONTE',
+    spec: 'Y = LINHA DO OLHO\nATRAVESSA A PALAVRA INTEIRA',
+    just: 'A fresta sai do É e corta a palavra inteira na linha do olho: o palco é horizontal e todas as letras contêm o mesmo mundo. É a posição de OOH, empenas e telas ultra-wide — a marca vira o próprio Plano da sala.',
+    wgsn: '<strong>RESPONSIVE SYSTEMS.</strong> Variantes nativas por plataforma: o mesmo comportamento se adapta ao formato — feed, empena, painel 32:9.',
+    frame(G, t, p) {
+      const splitY = G.capTop + MX.midBarCenterR * G.s;
+      const gap = G.accH * 1.5 * p;
+      word(G, { y: splitY, gap, all: true });
+      // segmento de luz varre o horizonte, de fora a fora
+      const segW = G.eW * 1.6;
+      const x = RM ? G.eX : ((t * 0.22) % (W + segW * 2)) - segW;
+      fresta(ctx, x, splitY - G.accH / 2, segW * p, G.accH, t);
+    },
+  },
+  {
+    nome: 'PISO',
+    spec: 'Y = BASE + 0.14 EM\nSOB A LETRA, NO CHÃO',
+    just: 'A luz sob a porta fechada. Antes do espetáculo existe o vazamento: o acento desce pra baseline e pulsa como a sala que já está acesa do outro lado. A marca promete sem mostrar.',
+    wgsn: '<strong>AMBIENT / SENSORIAL.</strong> Identidade como atmosfera: a luz vira presença espacial, não símbolo — branding que se sente antes de se ler.',
+    frame(G, t, p) {
+      word(G);
+      const dim = RM ? 1 : [1, 1, 0.5, 1][Math.floor(t / 1200) % 4]; // pulso em degraus
+      abre(G, G.eX, G.baseline + 0.14 * G.s, G.eW, t, p, dim);
+    },
+  },
+  {
+    nome: 'CONTRAFORMA',
+    spec: 'Y = VÃO SUPERIOR DO E\nENTRE A HASTE E OS BRAÇOS',
+    just: 'A luz mora dentro da letra, no vão entre os braços do E. É a caixa fechada vista de fora: o plasma guardado na contraforma, visível só pra quem chega perto. Dark-mode por natureza.',
+    wgsn: '<strong>ESPAÇO NEGATIVO.</strong> Marcas que ativam a contraforma como superfície própria — o vazio da letra vira o lugar mais valioso do desenho.',
+    frame(G, t, p) {
+      word(G);
+      const x0 = G.xs[1] + MX.stemRightR * G.s + 0.02 * G.s;
+      const x1 = G.eX + G.eW - 0.03 * G.s;
+      const y = G.capTop + MX.counterYR * G.s - G.accH / 2;
+      const blinkOff = !RM && t % 4200 > 4020 && t % 4200 < 4140;
+      if (!blinkOff) abre(G, x0, y, x1 - x0, t, p);
+    },
+  },
+  {
+    nome: 'FUGA',
+    spec: 'Y = CAIXA − 0.24 EM\nX DESGARRA EM PASSOS SOBRE O R',
+    just: 'O acento desgarra da caixa da letra e vaza sobre o R, em passos secos. A superposição não cabe no glyph: o estado escapa. É a quebra de grid como gesto ensaiado — erro de propósito, nunca acidente.',
+    wgsn: '<strong>ANARQUIA CONTROLADA.</strong> O off-grid e o desalinhamento deliberado como resposta ao excesso de marcas polidas e idênticas.',
+    frame(G, t, p) {
+      word(G);
+      const offs = [0.3, 0.52, 0.3, 0.72];
+      const off = RM ? 0.52 : offs[Math.floor(t / 850) % 4];
+      abre(G, G.eX + G.eW * off, G.capTop - 0.24 * G.s, G.eW, t, p);
+    },
+  },
+  {
+    nome: 'INSTRUMENTO',
+    spec: 'Y = CURSOR (QUANTIZADO)\nO ACENTO CORTA ONDE PASSA',
+    just: 'Posição nenhuma: o acento é tocável. O cursor arrasta a fresta pelo eixo da letra e ela corta o É onde passar — o público abre a Téra. "A Téra abre" é ato de observação, e a marca responde a quem observa.',
+    wgsn: '<strong>REACTIVE IDENTITY.</strong> O logo como instrumento e interface: sistemas de identidade que reagem a input em tempo real, não filme pronto.',
+    frame(G, t, p) {
+      const yMin = G.capTop - 0.55 * G.s;
+      const yMax = G.baseline + 0.26 * G.s;
+      let y;
+      if (pointer.in) {
+        y = clamp(pointer.y, yMin, yMax);
+      } else {
+        // sem cursor, o acento demonstra sozinho: varre o eixo em onda
+        y = G.capTop + G.s * MX.capR * (0.5 + 0.5 * Math.sin(t / 1400)) - G.accH / 2;
+        if (RM) y = G.capTop - 0.24 * G.s;
+      }
+      // quantiza em degraus de meia barra: fader mecânico, não deslize
+      const q = G.accH * 0.5;
+      y = G.capTop + Math.round((y - G.capTop) / q) * q;
+
+      const dentro = y > G.capTop - G.accH && y < G.baseline;
+      if (dentro) {
+        word(G, { y: y + G.accH / 2, gap: G.accH * 1.5 });
+      } else {
+        word(G);
+      }
+      abre(G, G.eX, y, G.eW, t, p);
+    },
+  },
+  {
+    nome: 'SUPERPOSIÇÃO',
+    spec: 'TODAS AO MESMO TEMPO\nO CLIQUE OBSERVA E COLAPSA',
+    just: 'Todas as posições ao mesmo tempo, nenhuma decidida. O clique observa e colapsa: uma acende, as outras apagam. É a tese da marca em uma imagem — a sala contém todos os mundos, e abrir é escolher um.',
+    wgsn: '<strong>VARIABLE SYSTEMS.</strong> O fim da marca estática única: identidades como sistemas de estados possíveis, com regras no lugar de um desenho só.',
+    frame(G, t, p) {
+      word(G);
+      const ghosts = superGhosts(G);
+      if (collapse) {
+        const g = ghosts[collapse.idx];
+        cutBack(G, g);
+        abre(G, g.x, g.y, g.w, t, 1);
+      } else {
+        const live = Math.floor(t / 520) % ghosts.length;
+        ghosts.forEach((g, i) => {
+          cutBack(G, g, i === live ? 1 : 0.88); // corte quase sólido: fatia, não mancha
+          abre(G, g.x, g.y, g.w, t, p, i === live ? 1 : 0.2);
+        });
+      }
+    },
+  },
+];
+
+// as posições fixas 01–09 reduzidas a retângulos, pra superposição
+function superGhosts(G) {
+  const midY = G.capTop + MX.midBarCenterR * G.s - G.accH / 2;
+  return [
+    { x: G.eX, y: G.capTop - 0.24 * G.s, w: G.eW, ref: 0 },
+    { x: G.eX + G.eW / 2 - (G.eW * 1.3) / 2, y: G.capTop - 0.52 * G.s, w: G.eW * 1.3, ref: 1 },
+    { x: G.eX, y: G.capTop - G.accH, w: G.eW, ref: 2 },
+    { x: G.eX, y: midY, w: G.eW, corta: true, ref: 3 },
+    { x: G.xs[0], y: midY, w: G.xs[3] + G.widths[3] - G.xs[0], corta: true, ref: 4 },
+    { x: G.eX, y: G.baseline + 0.14 * G.s, w: G.eW, ref: 5 },
+    {
+      x: G.xs[1] + MX.stemRightR * G.s + 0.02 * G.s,
+      y: G.capTop + MX.counterYR * G.s - G.accH / 2,
+      w: G.eX + G.eW - 0.03 * G.s - (G.xs[1] + MX.stemRightR * G.s + 0.02 * G.s),
+      ref: 6,
+    },
+    { x: G.eX + G.eW * 0.52, y: G.capTop - 0.24 * G.s, w: G.eW, corta: false, ref: 7 },
+    { x: G.eX, y: G.capTop + 0.55 * G.s * MX.capR, w: G.eW, corta: true, ref: 8 },
+  ];
+}
+
+// fundo preto atrás da fresta quando ela cruza a mancha branca: lê como corte
+function cutBack(G, g, alpha = 1) {
+  if (!g.corta) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = BLACK;
+  ctx.fillRect(g.x - G.accH * 0.3, g.y - G.accH * 0.35, g.w + G.accH * 0.6, G.accH * 1.7);
+  ctx.restore();
+}
+
+/* ---------- estado, transição e interação ---------- */
+
+let cur = clamp((Number(params.get('pos')) || 1) - 1, 0, 9);
+let switchAt = 0;        // quando o estado atual entrou
+let closingFrom = -1;    // estado anterior fechando
+let userLocked = QA;     // interação desliga o auto-ciclo
+let collapse = null;     // { idx } na superposição
+let collapseAt = 0;
+const pointer = { x: 0, y: 0, in: false };
+
+const CLOSE_MS = 180;
+const OPEN_MS = 340;
+const CYCLE_MS = 6500;
+
+function setState(i, byUser) {
+  if (i === cur) return;
+  closingFrom = cur;
+  cur = (i + STATES.length) % STATES.length;
+  switchAt = performance.now();
+  collapse = null;
+  if (byUser) userLocked = true;
+  syncUI();
+}
+
+function frame(now) {
+  ctx.fillStyle = BLACK;
+  ctx.fillRect(0, 0, W, H);
+  if (!W || !MX) return;
+  const G = layout();
+  const t = now - switchAt;
+
+  if (closingFrom >= 0 && t < CLOSE_MS) {
+    // o estado anterior fecha por abertura inversa; nada de fade
+    const pc = 1 - eo(t / CLOSE_MS);
+    STATES[closingFrom].frame(G, now, pc);
+  } else {
+    closingFrom = -1;
+    const p = eo((t - CLOSE_MS) / OPEN_MS);
+    STATES[cur].frame(G, now, clamp01(p));
+  }
+
+  // colapso da superposição expira e o sistema re-superpõe
+  if (collapse && now - collapseAt > 2600) { collapse = null; syncObserve(); }
+
+  // auto-ciclo motion-first até alguém tocar
+  if (!userLocked && t > CYCLE_MS) setState(cur + 1, false);
+}
+
+function loop(now) {
+  frame(now);
+  requestAnimationFrame(loop);
+}
+
+function drawStatic() {
+  if (!MX || !W) return;
+  ctx.fillStyle = BLACK;
+  ctx.fillRect(0, 0, W, H);
+  const G = layout();
+  STATES[cur].frame(G, 1400, 1);
+}
+
+/* ---------- UI: rail, painel, readout ---------- */
+
+const railEl = document.getElementById('rail');
+STATES.forEach((st, i) => {
+  const b = document.createElement('button');
+  b.innerHTML = `<b>${String(i + 1).padStart(2, '0')}</b>${st.nome}`;
+  b.addEventListener('click', () => setState(i, true));
+  railEl.appendChild(b);
+});
+
+function syncObserve() {
+  const el = document.getElementById('observe');
+  if (cur === 9 && collapse != null) {
+    const ref = superGhosts(layout())[collapse.idx].ref;
+    el.textContent = `ESTADO OBSERVADO → ${String(ref + 1).padStart(2, '0')} ${STATES[ref].nome}`;
+  } else if (cur === 9) {
+    el.textContent = 'TODOS OS ESTADOS COEXISTEM · CLIQUE PRA OBSERVAR';
+  } else {
+    el.textContent = '';
+  }
+}
+
+function syncUI() {
+  const st = STATES[cur];
+  document.getElementById('pNum').textContent = String(cur + 1).padStart(2, '0');
+  document.getElementById('pName').textContent = st.nome;
+  document.getElementById('pSpec').textContent = st.spec;
+  document.getElementById('pJust').textContent = st.just;
+  document.getElementById('pWgsn').innerHTML = st.wgsn;
+  [...railEl.children].forEach((b, i) => b.classList.toggle('on', i === cur));
+  syncObserve();
+  if (RM) drawStatic();
+}
+
+function syncReadout() {
+  const r = document.getElementById('readout');
+  const em = (v) => v.toFixed(3).replace('0.', '.');
+  r.textContent =
+    `BARRA DO E ${em(MX.barR)} EM → ACENTO ${em(MX.barR)} EM (MESMA GROSSURA${MX.medida ? ', MEDIDA DO GLYPH' : ' · FALLBACK'})\n` +
+    `HASTE ${em(MX.stemR)} EM · CAIXA ${em(MX.capR)} EM · ARCHIVO EXP BLACK`;
+}
+
+/* ---------- input ---------- */
+
+const stage = document.getElementById('stage');
+
+stage.addEventListener('pointermove', (e) => {
+  const r = cv.getBoundingClientRect();
+  pointer.x = e.clientX - r.left;
+  pointer.y = e.clientY - r.top;
+  pointer.in = true;
+});
+stage.addEventListener('pointerleave', () => { pointer.in = false; });
+
+stage.addEventListener('click', () => {
+  userLocked = true;
+  if (cur === 9) {
+    // observar: colapsa a superposição num estado
+    collapse = { idx: Math.floor(Math.random() * 9) };
+    collapseAt = performance.now();
+    syncObserve();
+  } else {
+    setState(cur + 1, true);
+  }
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') setState(cur + 1, true);
+  else if (e.key === 'ArrowLeft') setState(cur - 1, true);
+  else if (e.key >= '1' && e.key <= '9') setState(Number(e.key) - 1, true);
+  else if (e.key === '0') setState(9, true);
+});
+
+/* ---------- boot ---------- */
+
+let booted = false;
+function boot() {
+  if (booted) return;
+  booted = true;
+  MX = measureE();
+  syncReadout();
+  syncUI();
+  resize();
+  switchAt = performance.now();
+  if (RM) drawStatic();
+  else requestAnimationFrame(loop);
+}
+
+Promise.all([
+  document.fonts.load('900 100px "Archivo Exp"'),
+  document.fonts.load('400 16px "Space Mono"'),
+]).catch(() => {}).then(boot);
+setTimeout(boot, 1500); // failsafe: fonte travada não segura o lab
+</script>
+</body>
+</html>

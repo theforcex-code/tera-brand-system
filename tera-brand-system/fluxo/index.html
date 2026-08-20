@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Téra — Fluxo do pensamento</title>
+<style>
+@font-face {
+  font-family: 'Archivo Exp';
+  src: url('../case/fonts/Archivo-ExpBlack.ttf') format('truetype');
+  font-weight: 900; font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../case/fonts/SpaceMono-Regular.ttf') format('truetype');
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../case/fonts/SpaceMono-Bold.ttf') format('truetype');
+  font-weight: 700; font-display: swap;
+}
+:root {
+  --subsolo: #0A0908;
+  --cal: #F2EFE9;
+  --bio: #31C4FF;
+  --grey: #8d8a84;
+  --hair: rgba(242, 239, 233, 0.16);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--subsolo);
+  color: var(--cal);
+  font-family: 'Space Mono', monospace;
+  line-height: 1.55;
+}
+.wrap { max-width: 1060px; margin: 0 auto; padding: 60px 28px 120px; }
+
+header { margin-bottom: 90px; }
+header h1 {
+  font-family: 'Archivo Exp', sans-serif;
+  font-size: clamp(34px, 6vw, 72px);
+  line-height: 0.98;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+header p { color: var(--grey); margin-top: 18px; font-size: 13px; max-width: 60ch; }
+
+/* espinha do fluxo */
+.node {
+  position: relative;
+  padding: 0 0 90px 74px;
+  border-left: 1px solid var(--hair);
+  margin-left: 22px;
+}
+.node:last-child { border-left-color: transparent; }
+.node::before {
+  content: attr(data-n);
+  position: absolute;
+  left: -23px; top: -4px;
+  width: 44px; height: 44px;
+  border: 1px solid var(--cal);
+  border-radius: 50%;
+  background: var(--subsolo);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px;
+}
+.node h2 {
+  font-family: 'Archivo Exp', sans-serif;
+  font-size: clamp(22px, 3.4vw, 40px);
+  text-transform: uppercase;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+.node .kicker { color: var(--bio); font-size: 11px; letter-spacing: 0.14em; margin-bottom: 10px; }
+.node p.txt { max-width: 62ch; font-size: 14px; color: #cfccc5; }
+.node p.txt strong { color: var(--cal); }
+.node .seta { color: var(--grey); margin-top: 26px; font-size: 12px; }
+
+/* mídia */
+.media {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 26px;
+}
+.media figure { border: 1px solid var(--hair); }
+.media img, .media video { width: 100%; display: block; }
+.media figcaption { font-size: 10px; color: var(--grey); padding: 8px 10px; letter-spacing: 0.06em; }
+.media .slot {
+  border: 1px dashed rgba(242, 239, 233, 0.3);
+  min-height: 150px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--grey); font-size: 11px; text-align: center; padding: 18px;
+}
+.media .svgbox { background: #111; padding: 8%; }
+.media .svgbox.claro { background: var(--cal); }
+.media .svgbox img { width: 100%; }
+
+/* grid de decisões */
+.decisoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 26px;
+}
+.dec {
+  border: 1px solid var(--hair);
+  padding: 22px;
+}
+.dec h3 {
+  font-family: 'Archivo Exp', sans-serif;
+  font-size: 15px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  color: var(--bio);
+}
+.dec p { font-size: 12.5px; color: #cfccc5; }
+footer { color: var(--grey); font-size: 11px; margin-top: 40px; padding-left: 74px; }
+@media (max-width: 700px) { .node { padding-left: 52px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="kicker" style="color:var(--bio);font-size:11px;letter-spacing:.14em">TÉRA / MATA SÃO PAULO — DOCUMENTO DE PENSAMENTO</p>
+  <h1>Do briefing à<br>identidade</h1>
+  <p>O raciocínio completo em seis passos: o que o cliente nos deu, o que lemos nele, e cada decisão que tomamos. Ilustre trocando ou somando arquivos em <b>fluxo/media/</b> — imagens e vídeos entram no lugar dos slots.</p>
+</header>
+
+<!-- 01 -->
+<section class="node" data-n="01">
+  <p class="kicker">O LUGAR</p>
+  <h2>Um patrimônio que<br>vira plataforma</h2>
+  <p class="txt">O briefing entrega dois ativos que ninguém pode copiar juntos: o complexo histórico <strong>Matarazzo regenerado</strong> na Mata São Paulo e o <strong>maior painel de LED indoor da América Latina (32K)</strong> dentro dele. A física do lugar é o ponto de partida de tudo.</p>
+  <div class="media">
+    <figure><img src="media/01_casarao.jpg" alt="Casarão histórico à noite"><figcaption>O casarão aceso — foto do briefing</figcaption></figure>
+    <figure><img src="media/01_obra.jpg" alt="Obra da sala"><figcaption>A sala em obra — patrimônio + engenharia</figcaption></figure>
+  </div>
+  <p class="seta">↓ se o lugar é único, o problema não é divulgar…</p>
+</section>
+
+<!-- 02 -->
+<section class="node" data-n="02">
+  <p class="kicker">O PROBLEMA</p>
+  <h2>Não é lançar uma sala.<br>É fundar uma categoria</h2>
+  <p class="txt">O próprio cliente nomeia o desafio: <strong>"espetáculos multidimensionais" não existem no imaginário do público</strong>. E o atalho fácil — "sala imersiva" — é exatamente o rótulo-commodity que a marca precisa superar (o deck chega a usar "immersive room" numa legenda: a contradição que a auditoria apontou como prioridade nº 1).</p>
+  <div class="media">
+    <figure><img src="media/02_render_sala.jpg" alt="Render da sala"><figcaption>O render do briefing — a boca de luz do portal</figcaption></figure>
+    <div class="slot">slot livre — ex.: fluxo/media/02_extra.jpg|mp4</div>
+  </div>
+  <p class="seta">↓ e o nome já carrega a resposta…</p>
+</section>
+
+<!-- 03 -->
+<section class="node" data-n="03">
+  <p class="kicker">O NOME</p>
+  <h2>Téra: o extraordinário<br>enraizado</h2>
+  <p class="txt">Três camadas num nome de quatro letras: <strong>teras</strong> (grego: prodígio, o que rompe a ordem), <strong>tera</strong> (o prefixo da escala monumental) e <strong>terra</strong> (solo, origem, matéria). O logo existente do cliente — minúsculas geométricas construídas por arcos — vira nosso material de partida, não algo a descartar.</p>
+  <div class="media">
+    <figure class="svgbox claro"><img src="media/03_logo_cliente.png" alt="Logo original do cliente"><figcaption style="color:#777">O wordmark original do briefing</figcaption></figure>
+  </div>
+  <p class="seta">↓ do lugar + do nome nasce a física da marca…</p>
+</section>
+
+<!-- 04 -->
+<section class="node" data-n="04">
+  <p class="kicker">O CONCEITO</p>
+  <h2>Toda luz nasce<br>do escuro</h2>
+  <p class="txt">As referências do próprio deck apontam numa direção só: <strong>matéria orgânica de luz emergindo do preto</strong> — o plasma que brota das frestas do patrimônio e escorre como rio. A regra do Reveal ("não mostraremos a tela") vira princípio permanente: <strong>a tela nunca é a obra</strong>; o que se mostra é o que a atravessa.</p>
+  <div class="media">
+    <figure><img src="media/04_plasma_mata.jpg" alt="Plasma na mata"><figcaption>A estética-mãe: plasma orgânico na mata</figcaption></figure>
+    <figure><video src="media/04_reveal_rio.mp4" autoplay muted loop playsinline></video><figcaption>Ref. do cliente: o rio digital percorrendo o espaço</figcaption></figure>
+  </div>
+  <p class="seta">↓ conceito assumido, cada decisão deriva dele…</p>
+</section>
+
+<!-- 05 -->
+<section class="node" data-n="05">
+  <p class="kicker">AS DECISÕES</p>
+  <h2>O que ficou decidido</h2>
+  <div class="decisoes">
+    <div class="dec"><h3>Posicionamento</h3><p>Quadrante autoral-monumental, ocupado sozinho: a Téra <b>comissiona</b> obras inéditas do Sul Global em infraestrutura que ninguém tem. Não licencia acervo, não aluga projeção.</p></div>
+    <div class="dec"><h3>As recusas</h3><p>Não mostrar a tela. Não se descrever como "imersiva". Não usar gradiente chapado. Tudo que é fácil de copiar fica fora da marca.</p></div>
+    <div class="dec"><h3>Voz</h3><p><b>Assombro preciso</b>: grandiosa nas ideias, exata nas palavras. Categoria sempre por extenso, definida antes de adjetivada. Modo reticente na Fase 1.</p></div>
+    <div class="dec"><h3>Paleta</h3><p>Preto Subsolo <b>#0A0908</b> + Branco Cal <b>#F2EFE9</b>; espectro plasma só como matéria viva; Azul Bioluminescência <b>#31C4FF</b> como único acento sólido.</p></div>
+    <div class="dec"><h3>Wordmark</h3><p>Evoluir os arcos do cliente <b>em código paramétrico</b>: um raio, uma espessura, kerning óptico. Dois estados: tinta institucional e vão por onde o plasma passa.</p></div>
+    <div class="dec"><h3>Métrica-mestra</h3><p>O KPI da Fase 1 não é alcance: é a <b>adoção espontânea do termo</b> "espetáculos multidimensionais" pela imprensa e pelo público.</p></div>
+  </div>
+  <div class="media">
+    <figure class="svgbox"><img src="../brand/logo/tera_ink_cal_sobre_subsolo.svg" alt="Wordmark estado tinta"><figcaption>Estado institucional — tinta</figcaption></figure>
+    <figure class="svgbox"><img src="../brand/logo/tera_materia.svg" alt="Wordmark estado matéria"><figcaption>Estado matéria — o plasma atravessa os vãos</figcaption></figure>
+    <figure><video src="media/05_led_interativo.mp4" autoplay muted loop playsinline></video><figcaption>Ref. do cliente: matéria viva em escala de sala</figcaption></figure>
+  </div>
+  <p class="seta">↓ e decisão sem execução não é decisão…</p>
+</section>
+
+<!-- 06 -->
+<section class="node" data-n="06">
+  <p class="kicker">A EXECUÇÃO</p>
+  <h2>Sistema como código</h2>
+  <p class="txt">Nada aqui é mock estático: o wordmark é um <strong>gerador paramétrico</strong> (SVG exato), o plasma e os estados são <strong>engines em canvas</strong>, a apresentação é um <strong>site-case com motion real</strong>, e a plataforma verbal são <strong>12 documentos</strong> derivados só do briefing. Tudo regenerável, tudo versionado.</p>
+  <div class="media">
+    <figure><img src="media/06_case_hero.png" alt="Site-case"><figcaption>O site-case — apresentação viva</figcaption></figure>
+    <figure><img src="media/06_estado.png" alt="Poster de estado"><figcaption>Engine de estados — generativo como conteúdo</figcaption></figure>
+    <div class="slot">slot livre — ex.: fluxo/media/06_extra.jpg|mp4</div>
+  </div>
+</section>
+
+<footer>TÉRA × THE FORCE — fluxo do pensamento da identidade · para ilustrar, adicione arquivos em fluxo/media/ e recarregue</footer>
+</div>
+</body>
+</html>
