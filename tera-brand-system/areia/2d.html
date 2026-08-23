@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TÉRA — Lab 02 · Areia (2D)</title>
+<meta name="description" content="O wordmark Téra como areia interativa: grãos de 1 pixel com vento, talude e erosão, que caem e assentam em estratos dentro dos vãos das letras.">
+<link rel="icon" href="../assets/identidade/monogram_black.png">
+<style>
+/* Lab 02 · Areia. O logo é matéria: areia de 1 px com física, à la This is Sand.
+   Duas leituras — Vão (a areia só existe dentro das letras) e Duna (o logo é parede). */
+
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../case/fonts/SpaceMono-Regular.ttf?v=1') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../case/fonts/SpaceMono-Bold.ttf?v=1') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --subsolo: #0A0908;
+  --cal: #F2EFE9;
+  --silver: #8d8a84;
+  --grey: #4a4742;
+  --biolum: #31C4FF;
+  --pad: clamp(14px, 2.2vw, 28px);
+  --bar-h: 44px;                 /* altura real da barra inferior, medida em runtime */
+  --ease-seco: cubic-bezier(0.85, 0, 0.15, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--subsolo);
+  color: var(--cal);
+  font-family: 'Space Mono', ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+.lab { position: fixed; inset: 0; }
+
+#areia {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  touch-action: none;
+  cursor: crosshair;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.mono {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
+.bar {
+  position: absolute;
+  left: var(--pad);
+  right: var(--pad);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  pointer-events: none;
+  color: var(--silver);
+}
+.bar--top { top: var(--pad); }
+.bar--bottom { bottom: max(var(--pad), env(safe-area-inset-bottom)); }
+.bar > * { pointer-events: auto; }
+
+.bar__title { color: var(--cal); }
+.bar__title b { font-weight: 700; }
+.bar__title i { font-style: normal; color: var(--grey); margin: 0 0.6em; }
+
+#hud { font-variant-numeric: tabular-nums; }
+.link { color: var(--biolum); text-decoration: none; border-bottom: 1px solid currentColor; }
+
+.group { display: flex; gap: 2px; }
+.group + .group { margin-left: clamp(6px, 1.6vw, 22px); }
+.bar__controls { display: flex; flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; }
+
+button {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 6px 8px 5px;
+  color: var(--silver);
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  transition: color 160ms var(--ease-seco), border-color 160ms var(--ease-seco);
+}
+button:hover { color: var(--cal); }
+button:focus-visible { outline: 1px solid var(--biolum); outline-offset: 2px; }
+button[aria-pressed="true"] { color: var(--biolum); border-bottom-color: var(--biolum); }
+button:active { transform: translateY(1px); }
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--pad) * 2 + 44px);
+  transform: translateX(-50%);
+  text-align: center;
+  color: var(--silver);
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 700ms var(--ease-seco);
+}
+.hint span { color: var(--grey); }
+.hint--off { opacity: 0; }
+
+/* ---- painel de ajustes ---- */
+
+.painel {
+  position: absolute;
+  top: calc(var(--pad) * 2 + 18px);
+  right: var(--pad);
+  width: min(300px, calc(100vw - var(--pad) * 2));
+  max-height: calc(100vh - var(--pad) * 5 - 40px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 16px 16px;
+  background: color-mix(in srgb, var(--subsolo) 88%, transparent);
+  backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in srgb, var(--cal) 14%, transparent);
+  color: var(--silver);
+}
+.painel[hidden] { display: none; }
+
+.painel__head { display: flex; justify-content: space-between; align-items: baseline; }
+.painel__title { font-size: 11px; letter-spacing: 0.12em; color: var(--cal); font-weight: 700; }
+.painel__close { padding: 0; font-size: 11px; }
+
+.painel__presets, .painel__foot { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px; }
+.painel__foot { margin-top: 16px; border-top: 1px solid color-mix(in srgb, var(--cal) 10%, transparent); padding-top: 12px; }
+
+.chip {
+  padding: 5px 9px 4px;
+  border: 1px solid color-mix(in srgb, var(--cal) 16%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--cal) 16%, transparent);
+  font-size: 10px;
+}
+.chip[aria-pressed="true"] { border-color: var(--biolum); }
+
+.painel__grupo { margin-top: 18px; }
+.painel__legenda {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--grey);
+  margin-bottom: 8px;
+}
+
+.ctl { display: block; margin-bottom: 11px; cursor: ns-resize; }
+.ctl__head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ctl__nome { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; }
+.ctl__val { font-size: 10.5px; color: var(--cal); font-variant-numeric: tabular-nums; }
+
+.ctl input[type="range"] {
+  appearance: none;
+  width: 100%;
+  height: 14px;
+  margin-top: 4px;
+  background: none;
+  cursor: pointer;
+}
+.ctl input[type="range"]::-webkit-slider-runnable-track {
+  height: 1px;
+  background: color-mix(in srgb, var(--cal) 22%, transparent);
+}
+.ctl input[type="range"]::-moz-range-track {
+  height: 1px;
+  background: color-mix(in srgb, var(--cal) 22%, transparent);
+}
+.ctl input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--cal);
+  transition: background 160ms var(--ease-seco), transform 160ms var(--ease-seco);
+}
+.ctl input[type="range"]::-moz-range-thumb {
+  width: 9px;
+  height: 9px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cal);
+}
+.ctl input[type="range"]:hover::-webkit-slider-thumb { background: var(--biolum); transform: scale(1.25); }
+.ctl input[type="range"]:focus-visible { outline: 1px solid var(--biolum); outline-offset: 3px; }
+
+@media (max-width: 720px) {
+  .bar--top { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .bar--bottom { flex-wrap: wrap; justify-content: flex-start; row-gap: 4px; }
+  .bar__controls { justify-content: flex-start; row-gap: 4px; }
+  .group + .group { margin-left: 4px; }
+  button { padding: 9px 7px 8px; }
+  .hint { width: 84vw; }
+  .painel {
+    top: auto;
+    left: var(--pad);
+    right: var(--pad);
+    bottom: calc(var(--bar-h) + var(--pad) + 10px);
+    width: auto;
+    max-height: 44vh;
+  }
+  .hint { bottom: calc(var(--bar-h) + var(--pad) + 18px); }
+}
+
+@media (hover: none) {
+  .hint__keys { display: none; }   /* atalhos de teclado não fazem sentido no toque */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button, .hint, .ctl input[type="range"]::-webkit-slider-thumb { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<main class="lab">
+  <canvas id="areia" aria-label="Wordmark Téra em areia interativa. Toque e arraste para despejar areia."></canvas>
+
+  <p class="hint mono" id="hint">
+    toque e arraste para despejar areia nos vãos<br>
+    <span>duplo toque · fluxo contínuo</span><span class="hint__keys"> &nbsp;/&nbsp; A · ajustes &nbsp;/&nbsp; E · encher &nbsp;/&nbsp; espaço · pausa</span>
+  </p>
+
+  <header class="bar bar--top mono">
+    <span class="bar__title"><b>TÉRA</b><i>·</i>Lab 02<i>·</i>Areia<i>·</i><a href="./" class="link">2D → 3D</a></span>
+    <span id="hud" aria-live="off">0 grãos · 0.0 s</span>
+  </header>
+
+  <nav class="bar bar--bottom mono" aria-label="Controles">
+    <div class="group" role="group" aria-label="Modo">
+      <button type="button" data-mode="vao" aria-pressed="true" title="A areia só existe dentro das letras (M)">Vão</button>
+      <button type="button" data-mode="duna" aria-pressed="false" title="O logo é parede; a areia o soterra (M)">Duna</button>
+    </div>
+    <div class="bar__controls">
+      <div class="group" role="group" aria-label="Paleta">
+        <button type="button" data-palette="plasma" aria-pressed="true" title="Espectro Plasma (P)">Plasma</button>
+        <button type="button" data-palette="subsolo" aria-pressed="false" title="Estratos de terra (P)">Subsolo</button>
+        <button type="button" data-palette="cal" aria-pressed="false" title="Branco Cal (P)">Cal</button>
+      </div>
+      <div class="group">
+        <button type="button" id="chuva" aria-pressed="false" title="Chuva contínua na densidade do painel (R)">Chuva</button>
+        <button type="button" id="encher" aria-pressed="false" title="Enche o nível pedido na duração pedida (E)">Encher</button>
+      </div>
+      <div class="group">
+        <button type="button" id="pausa" aria-pressed="false" title="Pausa / segue (espaço) — ponto avança 1 passo">Pausa</button>
+        <button type="button" id="limpar" title="Esvazia e volta o relógio a zero (C)">Limpar</button>
+      </div>
+      <div class="group">
+        <button type="button" id="png" title="Salvar imagem (S)">PNG</button>
+        <button type="button" id="gravar" aria-pressed="false" title="Grava a animação em WebM (G)">Rec</button>
+        <button type="button" id="ajustes" aria-pressed="false" title="Física, tempo e matéria (A)">Ajustes</button>
+      </div>
+    </div>
+  </nav>
+</main>
+
+<script type="module" src="main.js?v=17"></script>
+</body>
+</html>
