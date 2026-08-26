@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TÉRA — Lab 02 · Areia GPU</title>
+<title>TÉRA — Lab 02 · Areia 3D</title>
 <meta name="description" content="O wordmark Téra escoa de um plano de terra para o outro e vira rocha: cada camada de areia guarda a cor do instante em que caiu, e o corte revela o tempo gravado.">
 <link rel="icon" href="favicon.png">
 <style>
@@ -93,6 +93,18 @@ body {
 #hud { font-variant-numeric: tabular-nums; }
 .link { color: var(--biolum); text-decoration: none; border-bottom: 1px solid currentColor; }
 
+/* as três versões vivem no topo de todas elas: a atual acesa, as outras apagadas */
+.versoes { display: inline-flex; gap: 10px; margin-left: 0.6em; }
+.versoes a {
+  color: var(--silver);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 160ms var(--ease-seco), border-color 160ms var(--ease-seco);
+}
+.versoes a:hover { color: var(--cal); }
+.versoes a:focus-visible { outline: 1px solid var(--biolum); outline-offset: 2px; }
+.versoes a[aria-current="page"] { color: var(--biolum); border-bottom-color: currentColor; }
+
 .group { display: flex; gap: 2px; }
 .group + .group { margin-left: clamp(6px, 1.6vw, 22px); }
 .bar__controls { display: flex; flex-wrap: wrap; justify-content: flex-end; row-gap: 8px; }
@@ -147,18 +159,6 @@ button:active { transform: translateY(1px); }
   transition: opacity 400ms var(--ease-seco);
 }
 .descritor--off { opacity: 0; }
-
-.erro {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  transform: translate(-50%, -50%);
-  max-width: 60ch;
-  text-align: center;
-  color: #ff6b6b;
-  line-height: 1.7;
-}
-.erro[hidden] { display: none; }
 
 /* ---- painel de ajustes ---- */
 
@@ -276,15 +276,13 @@ button:active { transform: translateY(1px); }
   <p class="descritor mono" id="descritor">Espetáculos multidimensionais</p>
 
   <p class="hint mono" id="hint">
-    arraste para girar &nbsp;·&nbsp; role para aproximar &nbsp;·&nbsp; simulação em WebGPU<br>
-    <span>o logo enche e o fluxo não para</span><span class="hint__keys"> &nbsp;/&nbsp; A · ajustes &nbsp;/&nbsp; E · encher &nbsp;/&nbsp; D · descritor</span>
+    arraste para girar em qualquer direção &nbsp;·&nbsp; role para aproximar<br>
+    <span>encher · o TÉRA se enche de areia</span><span class="hint__keys"> &nbsp;/&nbsp; A · ajustes &nbsp;/&nbsp; E · encher &nbsp;/&nbsp; D · descritor</span>
   </p>
 
-  <p class="erro mono" id="erro" hidden></p>
-
   <header class="bar bar--top mono">
-    <span class="bar__title"><b>TÉRA</b><i>·</i>Lab 02<i>·</i>Areia GPU<i>·</i><a href="./" class="link">GPU → WebGL</a></span>
-    <span id="hud" aria-live="off">iniciando WebGPU…</span>
+    <span class="bar__title"><b>TÉRA</b><i>·</i>Lab 02<i>·</i>Areia</span><span class="versoes"><a href="./">GPU</a><a href="3d.html" aria-current="page">WebGL</a><a href="2d.html">2D</a></span>
+    <span id="hud" aria-live="off">0 grãos · 0.0 s · rocha 0%</span>
   </header>
 
   <nav class="bar bar--bottom mono" aria-label="Controles">
@@ -299,25 +297,28 @@ button:active { transform: translateY(1px); }
         <button type="button" data-palette="subsolo" aria-pressed="false" title="Estratos de terra (P)">Subsolo</button>
         <button type="button" data-palette="cal" aria-pressed="false" title="Branco Cal (P)">Cal</button>
       </div>
-      <div class="group" role="group" aria-label="Custo">
-        <button type="button" data-perfil="leve" title="Meio milhão de grãos — para máquina modesta">Leve</button>
-        <button type="button" data-perfil="medio" title="2 milhões de grãos — padrão">Médio</button>
-        <button type="button" data-perfil="alto" title="8 milhões — só com GPU sobrando">Alto</button>
+      <div class="group">
+        <button type="button" id="chuva" aria-pressed="false" title="Escoamento contínuo pelas letras (R)">Escoar</button>
+        <button type="button" id="encher" aria-pressed="false" title="Enche o TÉRA de areia na duração pedida (E)">Encher</button>
       </div>
       <div class="group">
-        <button type="button" id="rodar" aria-pressed="true" title="Liga e desliga o fluxo perpétuo">Fluxo</button>
-        <button type="button" id="pausa" aria-pressed="false" title="Pausa / segue (espaço)">Pausa</button>
-        <button type="button" id="limpar" title="Recomeça do zero (C)">Recomeçar</button>
+        <button type="button" id="pausa" aria-pressed="false" title="Pausa / segue (espaço) — ponto avança 1 passo">Pausa</button>
+        <button type="button" id="limpar" title="Desfaz a rocha e volta o relógio a zero (C)">Limpar</button>
       </div>
       <div class="group">
         <button type="button" id="png" title="Salvar imagem (S)">PNG</button>
-        <button type="button" id="descritor-btn" aria-pressed="true" title="Mostra ou esconde o descritor (D)">Descritor</button>
+        <button type="button" id="gravar" aria-pressed="false" title="Grava a animação em WebM (G)">Rec</button>
+        <button type="button" id="descritor-btn" aria-pressed="true" title="Mostra ou esconde o descritor da marca (D)">Descritor</button>
+        <button type="button" id="caixa" aria-pressed="false" title="Mostra ou esconde a caixa do volume (B)">Caixa</button>
         <button type="button" id="ajustes" aria-pressed="false" title="Física, tempo e matéria (A)">Ajustes</button>
       </div>
     </div>
   </nav>
 </main>
 
-<script type="module" src="gpu-main.js?v=29"></script>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+<script type="module" src="main3d.js?v=30"></script>
 </body>
 </html>

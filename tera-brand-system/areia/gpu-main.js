@@ -15,12 +15,12 @@
 import {
   loadWordmark, fitWordmark, rasterizeWordmark,
   shapeFromSearch, wireShapeButtons, DEFAULT_SHAPE,
-} from './wordmark.js?v=29';
-import { PALETTES, buildLut } from './palette.js?v=29';
-import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=29';
-import { OrbitCamera } from './gpu/camera.js?v=29';
-import { fromSearch, toSearch } from './params.js?v=29';
-import { Panel } from './panel.js?v=29';
+} from './wordmark.js?v=30';
+import { PALETTES, buildLut } from './palette.js?v=30';
+import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=30';
+import { OrbitCamera } from './gpu/camera.js?v=30';
+import { fromSearch, toSearch } from './params.js?v=30';
+import { Panel } from './panel.js?v=30';
 
 /* Perfis de custo. A versão anterior enchia 13,5 milhões de grãos e desenhava
    TODOS a cada quadro — numa tela de 1,2 milhão de pixels, isso é ~11 grãos por
@@ -392,13 +392,20 @@ function wireUi() {
   window.addEventListener('resize', resize);
 }
 
+/* Esta versão é a porta de entrada do site, e WebGPU só existe em Chrome e Edge
+   recentes. Quem chega de Safari ou Firefox não pode bater numa mensagem de erro
+   e acabar ali: o lab WebGL faz a mesma leitura e roda em qualquer navegador. */
 function fail(msg) {
   hudEl.textContent = msg;
   const el = document.getElementById('erro');
-  if (el) {
-    el.textContent = msg;
-    el.hidden = false;
-  }
+  if (!el) return;
+  el.textContent = `${msg} · `;
+  const saida = document.createElement('a');
+  saida.href = '3d.html';
+  saida.className = 'link';
+  saida.textContent = 'abrir a versão WebGL';
+  el.append(saida);
+  el.hidden = false;
 }
 
 async function init() {

@@ -10,9 +10,13 @@ Três labs sobre a mesma ideia, do mais simples ao mais bruto:
 
 | | arquivo | motor | matéria |
 |---|---|---|---|
+| **GPU** | `index.html` | WebGPU (compute shader) | 2 a 8 milhões |
+| **WebGL** | `3d.html` | Three.js | ~620 mil grãos |
 | **2D** | `2d.html` | Canvas 2D | ~200 mil grãos |
-| **3D** | `index.html` | Three.js (WebGL) | ~620 mil grãos |
-| **GPU** | `gpu.html` | WebGPU (compute shader) | 2 a 8 milhões |
+
+O WebGPU é a porta de entrada e as três versões ficam linkadas no topo de todas
+elas. Sem suporte a WebGPU, essa página oferece a versão WebGL, que roda em
+qualquer navegador.
 
 E três formas de máscara, trocáveis por `?forma=` ou pelos botões da barra:
 
