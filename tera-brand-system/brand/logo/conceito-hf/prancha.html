@@ -191,6 +191,24 @@ body {
 .card.dead .plate { opacity: .3; }
 .card.dead figcaption h3 { color: var(--muted); }
 
+/* ---------- the reference: a starting point, not a proposal ---------- */
+.grid-ref { grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); }
+@media (max-width: 860px) { .grid-ref { grid-template-columns: minmax(0, 1fr); } }
+.refnote {
+  background: var(--surface); padding: 26px 30px;
+  display: flex; flex-direction: column; justify-content: center; gap: 12px;
+}
+.refnote p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--muted); max-width: 62ch; }
+.refnote p strong { color: var(--ink); font-weight: 600; }
+.refnote p em { color: var(--ink); font-style: italic; }
+.rec.ref {
+  color: var(--ink); background: none;
+  border: 1px solid var(--edge-hi); letter-spacing: .12em;
+  text-transform: none; font-size: 10px;
+}
+/* the reference sits out of the production tests - it is the given, not a candidate */
+body.only2 .ref-serie .card { opacity: 1; }
+
 /* ---------- test modes ---------- */
 body.neg .plate { filter: invert(1); }
 body.only2 .card[data-colours="2"] { opacity: 1; }
@@ -250,12 +268,12 @@ body.neg .chipart { filter: invert(1); }
   <header class="masthead">
     <div class="lede">
       <h1>Cinquenta símbolos<br><em>para a</em> Téra</h1>
-      <p>Cinco séries de exploração para a sala de espetáculos multidimensionais da Mata São Paulo. Nenhuma é final — são posições de partida para escolher uma direção.</p>
+      <p>Cinco séries de exploração para a sala de espetáculos multidimensionais da Mata São Paulo, lidas contra o monograma do conceito atual. Nenhuma é final — são posições de partida para escolher uma direção.</p>
     </div>
     <dl class="facts">
       <div><dt>Modelo</dt><dd>Recraft V4.1 · vector</dd></div>
       <div><dt>Formato</dt><dd>SVG editável, 1024 px</dd></div>
-      <div><dt>Séries</dt><dd>A · B · C · D · E</dd></div>
+      <div><dt>Séries</dt><dd>referência + A · B · C · D · E</dd></div>
       <div><dt>Custo</dt><dd>125 créditos</dd></div>
     </dl>
   </header>
@@ -266,6 +284,30 @@ body.neg .chipart { filter: invert(1); }
     <button class="tgl" id="t-small" type="button" aria-pressed="false">Redução 30 px</button>
     <button class="tgl" id="t-only2" type="button" aria-pressed="false">Só preto e branco</button>
   </div>
+
+  <section class="serie ref-serie">
+    <div class="shead">
+      <h2>Ponto de partida</h2>
+      <span>o monograma do conceito atual — tudo abaixo responde a ele</span>
+    </div>
+    <div class="grid grid-ref">
+<figure class="card" data-colours="2">
+  <div class="plate"><svg class="mk" preserveAspectRatio="xMidYMid meet" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><rect x="0" y="0" fill="rgb(0,0,0)"/><path d="M 146.18 150.00 H 853.82 V 391.82 H 647.64 V 850.00 H 388.00 V 391.82 H 146.18 Z" fill="rgb(255,255,255)"/></svg></div>
+  <figcaption>
+    <div class="meta"><span class="code">00</span><span class="tones">2 cores</span></div>
+    <h3>Referência</h3>
+    <p>O monograma do conceito atual: travessa larga, haste deslocada à direita.</p>
+    
+    <span class="rec ref">redesenho — aguarda o original</span>
+  </figcaption>
+</figure>
+      <div class="refnote">
+        <p>As cinquenta marcas das cinco séries existem para serem lidas <strong>contra esta</strong>: travessa larga e chapada, haste mais estreita deslocada um pouco à direita do centro, tudo em branco puro sobre preto.</p>
+        <p>Este cartão é um <strong>redesenho</strong>, feito a partir das proporções da imagem de referência — travessa 708×242, haste 260×458, deslocamento de 18 sobre uma caixa de 1000. O arquivo original não está neste repositório e não está no site do conceito, então as medidas são aproximação e devem ser substituídas pelo vetor de origem.</p>
+        <p>O descritor <em>Téra · Espetáculos Multidimensionais</em> não foi redesenhado de propósito: é uma fonte específica, e chutar o desenho de um wordmark produz um “quase certo” que atrapalha mais do que ajuda.</p>
+      </div>
+    </div>
+  </section>
 
   <section class="serie">
     <div class="shead">
@@ -1668,6 +1710,7 @@ body.neg .chipart { filter: invert(1); }
   </section>
 
   <div class="strip">
+<div class="chip"><div class="chipart"><svg class="mk" preserveAspectRatio="xMidYMid meet" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><rect x="0" y="0" fill="rgb(0,0,0)"/><path d="M 146.18 150.00 H 853.82 V 391.82 H 647.64 V 850.00 H 388.00 V 391.82 H 146.18 Z" fill="rgb(255,255,255)"/></svg></div><span>00 Referência</span></div>
 <div class="chip"><div class="chipart"><svg class="mk" preserveAspectRatio="xMidYMid meet" aria-hidden="true" version="1.1" xmlns="http://www.w3.org/2000/svg"  viewBox="0 0 2048 2048" xmlns:c2pa="http://c2pa.org/manifest">
 <path transform="translate(0,0)" fill="rgb(0,0,0)" d="M 0 0 L 2048 0 L 2048 2048 L 0 2048 L 0 0 z"/>
 <path transform="translate(0,0)" fill="rgb(255,255,255)" d="M 476.676 479.053 L 1570.91 479.055 L 1570.91 738.018 L 1323.87 738.155 L 1323.17 1566.64 L 1095.67 1566.57 C 1097.29 1449.6 1095.99 1329.68 1096.03 1212.5 L 1096.18 737.929 L 952.687 738.044 C 951.281 769.637 952.262 808.275 952.287 840.135 L 952.338 1019.09 L 952.591 1566.51 L 725.034 1566.66 L 725.062 737.923 L 476.911 738.087 C 476.089 707.621 476.682 674.833 476.711 644.244 L 476.676 479.053 z"/>
