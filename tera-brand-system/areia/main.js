@@ -8,11 +8,11 @@
 import {
   loadWordmark, fitWordmark, rasterizeWordmark, columnRunTops,
   shapeFromSearch, wireShapeButtons, DEFAULT_SHAPE,
-} from './wordmark.js?v=30';
-import { SandField } from './sand.js?v=30';
-import { PALETTES, buildLut, packRGB, hexToRgb, lutIndex } from './palette.js?v=30';
-import { fromSearch, toSearch, DEFAULTS } from './params.js?v=30';
-import { Panel } from './panel.js?v=30';
+} from './wordmark.js?v=31';
+import { SandField } from './sand.js?v=31';
+import { PALETTES, buildLut, packRGB, hexToRgb, lutIndex } from './palette.js?v=31';
+import { fromSearch, toSearch, DEFAULTS } from './params.js?v=31';
+import { Panel } from './panel.js?v=31';
 
 const forma = shapeFromSearch();
 

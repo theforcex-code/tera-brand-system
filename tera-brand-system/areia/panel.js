@@ -1,7 +1,7 @@
 /* Lab 02 · Areia — painel de ajustes gerado a partir do schema de params.js.
    Não conhece a simulação: só lê/escreve valores e avisa quem o criou. */
 
-import { PARAMS, GROUPS, PRESETS, DEFAULTS, format } from './params.js?v=30';
+import { PARAMS, GROUPS, PRESETS, DEFAULTS, format } from './params.js?v=31';
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);

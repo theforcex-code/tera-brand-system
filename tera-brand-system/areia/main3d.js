@@ -9,12 +9,12 @@
 import {
   loadWordmark, fitWordmark, rasterizeWordmark,
   shapeFromSearch, wireShapeButtons, DEFAULT_SHAPE,
-} from './wordmark.js?v=30';
-import { SandVolume } from './sand3d.js?v=30';
-import { Scene3D } from './scene3d.js?v=30';
-import { PALETTES, buildLut, lutIndex } from './palette.js?v=30';
-import { fromSearch, toSearch } from './params.js?v=30';
-import { Panel } from './panel.js?v=30';
+} from './wordmark.js?v=31';
+import { SandVolume } from './sand3d.js?v=31';
+import { Scene3D } from './scene3d.js?v=31';
+import { PALETTES, buildLut, lutIndex } from './palette.js?v=31';
+import { fromSearch, toSearch } from './params.js?v=31';
+import { Panel } from './panel.js?v=31';
 
 const forma = shapeFromSearch();
 

@@ -32,9 +32,16 @@ export const SHAPES = {
   },
   versal: {
     label: 'Versal',
-    hint: 'TÉRA em caixa alta bold — traço grosso, mais areia por letra',
-    kind: 'vector',
-    urls: ['../brand/logo/tera_shape_caps.svg', 'logo/tera_shape_caps.svg'],
+    hint: 'TÉRA em Helvetica Bold, do sistema — letra cheia, muito mais areia',
+    kind: 'texto',
+    texto: 'TÉRA',
+    peso: 700,
+    // Pilha do SISTEMA, de propósito: Helvetica e Arial são licenciadas e não
+    // podem ser empacotadas num repositório público. Assim nada é
+    // redistribuído — em macOS sai Helvetica de verdade, no Windows a Arial
+    // (metricamente idêntica), e Archivo, que já vive no projeto sob OFL,
+    // segura o resto.
+    familia: '"Helvetica Neue", Helvetica, Arial, Archivo, sans-serif',
   },
 };
 
@@ -167,6 +174,44 @@ function medirBitmap(img) {
   };
 }
 
+/** Mede o texto e devolve a forma pronta para o fit.
+
+    Duas coisas que o canvas exige e são fáceis de esquecer:
+
+    · a fonte precisa estar CARREGADA antes de medir. `ctx.measureText` com a
+      família ainda não resolvida devolve a métrica da fonte de fallback, e a
+      forma sai encaixada errado na grade.
+    · o viewBox tem que sair de `actualBoundingBox*`, a caixa da TINTA, e não de
+      `width` mais o corpo. Aquilo é a caixa de AVANÇO: traz o espaçamento
+      lateral e a altura da linha inteira, então as letras entrariam na caixa de
+      areia menores do que as outras formas e desalinhadas na vertical. */
+async function loadTexto(entry) {
+  const corpo = 200;                       // corpo de referência; o fit reescala
+  const fonte = `${entry.peso} ${corpo}px ${entry.familia}`;
+  try {
+    await document.fonts.load(fonte, entry.texto);
+  } catch {
+    // fonte do sistema não precisa carregar; seguir com o que houver
+  }
+  const ctx = document.createElement('canvas').getContext('2d');
+  ctx.font = fonte;
+  const m = ctx.measureText(entry.texto);
+  const w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+  const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+  if (!(w > 0 && h > 0)) return null;
+  const pad = CLEARSPACE * w;
+  return {
+    kind: 'texto',
+    texto: entry.texto,
+    fonte,
+    // o texto é desenhado na origem, com baseline alfabética: a caixa da tinta
+    // é medida a partir dela, então o viewBox nasce em coordenadas negativas
+    viewBox: [-m.actualBoundingBoxLeft - pad, -m.actualBoundingBoxAscent - pad,
+      w + 2 * pad, h + 2 * pad],
+    strokeWidth: h * 0.21,       // haste de negrito grotesco — o lab 2D usa isto
+  };
+}
+
 async function loadRaster(urls) {
   for (const url of urls) {
     try {
@@ -183,9 +228,10 @@ async function loadRaster(urls) {
 export async function loadWordmark(shape = DEFAULT_SHAPE) {
   const nome = SHAPES[shape] ? shape : DEFAULT_SHAPE;
   const entry = SHAPES[nome];
-  const wm = entry.kind === 'raster'
-    ? await loadRaster(entry.urls)
-    : await loadVector(entry.urls);
+  let wm = null;
+  if (entry.kind === 'texto') wm = await loadTexto(entry);
+  else if (entry.kind === 'raster') wm = await loadRaster(entry.urls);
+  else wm = await loadVector(entry.urls);
   if (wm) return { ...wm, shape: nome };
   console.warn(`[areia] forma "${nome}": usando cópia embutida`);
   return { ...FALLBACK, shape: DEFAULT_SHAPE };
@@ -212,7 +258,12 @@ export function rasterizeWordmark(wm, w, h, fit) {
   cv.height = h;
   const ctx = cv.getContext('2d', { willReadFrequently: true });
   ctx.setTransform(fit.scale, 0, 0, fit.scale, fit.tx, fit.ty);
-  if (wm.kind === 'raster') {
+  if (wm.kind === 'texto') {
+    // letra CHEIA, não contorno: é o que a Helvetica é, e enche de areia
+    ctx.font = wm.fonte;
+    ctx.fillStyle = '#fff';
+    ctx.fillText(wm.texto, 0, 0);
+  } else if (wm.kind === 'raster') {
     // o viewBox do bitmap está em pixels da imagem, então ela entra na origem e
     // a transformada do fit resolve escala e centragem
     ctx.imageSmoothingQuality = 'high';
