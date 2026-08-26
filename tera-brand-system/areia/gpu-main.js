@@ -12,12 +12,12 @@
 
    Tudo o que governa isso está aberto no painel e cabe na URL. */
 
-import { loadWordmark, fitWordmark, rasterizeWordmark } from './wordmark.js?v=26';
-import { PALETTES, buildLut } from './palette.js?v=26';
-import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=26';
-import { OrbitCamera } from './gpu/camera.js?v=26';
-import { fromSearch, toSearch } from './params.js?v=26';
-import { Panel } from './panel.js?v=26';
+import { loadWordmark, fitWordmark, rasterizeWordmark } from './wordmark.js?v=27';
+import { PALETTES, buildLut } from './palette.js?v=27';
+import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=27';
+import { OrbitCamera } from './gpu/camera.js?v=27';
+import { fromSearch, toSearch } from './params.js?v=27';
+import { Panel } from './panel.js?v=27';
 
 /* Perfis de custo. A versão anterior enchia 13,5 milhões de grãos e desenhava
    TODOS a cada quadro — numa tela de 1,2 milhão de pixels, isso é ~11 grãos por
@@ -29,8 +29,9 @@ const PERFIS = {
   medio: { nx: 768,  ny: 432, nz: 64 },     // ~2,3 M grãos
   alto:  { nx: 1024, ny: 576, nz: 128 },    // ~8 M grãos — só com GPU sobrando
 };
-const FPS_ALVO = 30;                        // teto: acima disso ninguém vê diferença
-const REPOUSO_PASSOS = 4;                   // cheio e sem fluxo: 1 passo a cada N quadros
+const FPS_ALVO = 60;                        // desenha na cadência da tela, até 60
+const PASSOS_POR_SEGUNDO = 60;              // física em passo FIXO, independente do desenho
+const MAX_PASSOS = 3;                       // teto de recuperação num quadro atrasado
 const FIT = { marginX: 0.05, marginY: 0.1, yBias: 0.5 };
 const CLEAR = [0.039, 0.035, 0.031, 1];
 const DRIFT_PER_SECOND = 1 / 26;      // a 1× de deriva, um ciclo de paleta a cada 26 s
@@ -155,35 +156,62 @@ function physics() {
 
 // ---------- laço ----------
 
-/** Vale a pena rodar a física neste quadro?
+/* Passo fixo. A física precisa de intervalos IGUAIS: se um quadro avança dois
+   passos e o seguinte nenhum, a areia anda aos trancos mesmo com o contador de
+   fps cheio. O acumulador guarda o tempo que sobrou e o gasta em passos
+   inteiros, todos do mesmo tamanho — a velocidade muda a CADÊNCIA dos passos,
+   nunca quantos deles se amontoam num quadro. */
 
-    Com a cavidade cheia e o fluxo baixo, quase nada se move — mas cada passo
-    ainda lança uma thread por grão. Em repouso, espaçamos os passos: a cor
-    continua rolando (isso é de graça, mora no vertex shader) e o olho não
-    percebe a diferença, enquanto a GPU descansa. */
-function precisaSimular() {
-  if (!isFull()) return true;
-  if (values.fluxo <= 0.001) return frameNo % (REPOUSO_PASSOS * 4) === 0;
-  return frameNo % REPOUSO_PASSOS === 0;
+/** Nada se move? Só então vale pular física.
+
+    A versão anterior espaçava os passos de 4 em 4 quadros para poupar a placa —
+    e era isso que fazia a queda pulsar: os grãos em circulação andavam a 7
+    posições por segundo enquanto a tela ia a 30. Agora o desconto só vale
+    quando não há o que animar: cavidade cheia e fluxo desligado. A cor continua
+    rolando de graça no vertex shader, então a peça nunca fica estática. */
+function emRepouso() {
+  return isFull() && values.fluxo <= 0.001;
+}
+
+let acumulado = 0;
+
+/** Quantos passos de física cabem no tempo decorrido. */
+function agenda(dt) {
+  if (state.paused || !state.running) {
+    acumulado = 0;
+    return 0;
+  }
+  const passo = 1 / (PASSOS_POR_SEGUNDO * Math.max(0.1, values.velocidade));
+  acumulado += emRepouso() ? dt * 0.1 : dt;
+  let n = Math.floor(acumulado / passo);
+  if (n > MAX_PASSOS) {          // atraso grande (aba voltando, GC): descarta o resto
+    n = MAX_PASSOS;              // recuperar tudo viraria espiral de morte
+    acumulado = 0;
+  } else {
+    acumulado -= n * passo;
+  }
+  return n;
 }
 
 let last = performance.now();
-let frameNo = 0;
-const perf = { simMs: 0, drawMs: 0, fps: 0, acc: 0, n: 0 };
+const INTERVALO = 1000 / FPS_ALVO;
+const perf = { simMs: 0, drawMs: 0, fps: 0, passos: 0, acc: 0, n: 0 };
 
 /** Um quadro: simular, mover a câmera, desenhar. Separado do rAF para poder ser
     chamado à mão em diagnóstico — aba em segundo plano não recebe rAF. */
 function tick(dt) {
   const t0 = performance.now();
-  if (!state.paused && state.running && precisaSimular()) {
-    const steps = Math.max(1, Math.round(values.velocidade * 2));
+  const passos = agenda(dt);
+  if (passos > 0) {
     const phys = physics();
     // cheio: as bocas estão tomadas e semear só gasta thread à toa
     const spawn = isFull() ? 0 : Math.round(SPAWN_BASE * (values.chuva / 100));
-    for (let s = 0; s < steps; s++) sim.step(phys, spawn);
-    state.simTime += dt;
+    for (let s = 0; s < passos; s++) sim.step(phys, spawn);
   }
-  state.lutPos += dt * values.deriva * DRIFT_PER_SECOND;   // roda mesmo em pausa da matéria
+  // relógio e deriva andam com o tempo real, não com o número de passos: assim a
+  // rajada de vento e a rolagem da paleta não herdam o serrilhado da física
+  if (!state.paused) state.simTime += dt;
+  state.lutPos += dt * values.deriva * DRIFT_PER_SECOND;
   const t1 = performance.now();
 
   resize();
@@ -194,6 +222,7 @@ function tick(dt) {
   cam.autoRotate = values.orbita;
   const vp = cam.update(canvas.width / canvas.height, dt, dims.nx * 0.05, dims.nx * 8);
   sim.render(vp, { x: dims.nx / 2, y: dims.ny * 0.5, z: dims.nz / 2 }, CLEAR);
+  perf.passos += passos;
   return [t1 - t0, performance.now() - t1];
 }
 
@@ -202,15 +231,18 @@ function frame(now) {
   // aba escondida não desenha nem simula: em segundo plano isso só esquentava a placa
   if (document.hidden) {
     last = now;
+    acumulado = 0;
     return;
   }
   const desde = now - last;
-  if (desde < 1000 / FPS_ALVO - 1) return;        // teto de quadros
-  const dt = Math.min(0.05, desde / 1000);
+  // 0,8 do intervalo de folga: numa tela de 60 Hz o quadro chega a 16,67 ms, e um
+  // teto exato de 16,67 o rejeitava por microssegundos — o período dobrava para
+  // 33 ms e a queda ganhava um soluço a cada poucos quadros
+  if (desde < INTERVALO * 0.8) return;
   last = now;
+  const dt = Math.min(0.1, desde / 1000);
   const [simMs, drawMs] = tick(dt);
 
-  frameNo++;
   perf.simMs += simMs;
   perf.drawMs += drawMs;
   perf.acc += dt;
@@ -219,11 +251,13 @@ function frame(now) {
     perf.fps = Math.round(perf.n / perf.acc);
     perf.simMs /= perf.n;
     perf.drawMs /= perf.n;
+    perf.passos = Math.round(perf.passos / perf.acc);
     updateHud();
     perf.acc = 0;
     perf.n = 0;
     perf.simMs = 0;
     perf.drawMs = 0;
+    perf.passos = 0;
     sim.readCount().catch(() => {});
   }
 }
@@ -234,6 +268,7 @@ function updateHud() {
     `${sim.count.toLocaleString('pt-BR')} grãos`,
     `${pct}%`,
     `${perf.fps} fps`,
+    `${perf.passos}/s`,
     `sim ${perf.simMs.toFixed(1)} ms`,
   ];
   if (isFull()) parts.push('cheio · circulando');

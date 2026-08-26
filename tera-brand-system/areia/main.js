@@ -5,11 +5,11 @@
    Toda a física e o tempo vêm de params.js: o painel escreve em `values`, este
    módulo traduz `values` em regra por passo. A cena inteira cabe na URL. */
 
-import { loadWordmark, fitWordmark, rasterizeWordmark, columnRunTops } from './wordmark.js?v=26';
-import { SandField } from './sand.js?v=26';
-import { PALETTES, buildLut, packRGB, hexToRgb, lutIndex } from './palette.js?v=26';
-import { fromSearch, toSearch, DEFAULTS } from './params.js?v=26';
-import { Panel } from './panel.js?v=26';
+import { loadWordmark, fitWordmark, rasterizeWordmark, columnRunTops } from './wordmark.js?v=27';
+import { SandField } from './sand.js?v=27';
+import { PALETTES, buildLut, packRGB, hexToRgb, lutIndex } from './palette.js?v=27';
+import { fromSearch, toSearch, DEFAULTS } from './params.js?v=27';
+import { Panel } from './panel.js?v=27';
 
 const STEP_HZ = 120;            // passos de simulação por segundo a 1×
 const MAX_STEPS_PER_FRAME = 6;

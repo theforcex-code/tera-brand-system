@@ -559,7 +559,12 @@ export class SandGPU {
     });
     pass.setPipeline(this.drawPipe);
     pass.setBindGroup(0, this.renderBind);
-    pass.draw(this.count || 1);
+    // slots, NÃO count: `count` só chega da GPU duas vezes por segundo, então
+    // desenhar por ele fazia a areia aparecer em levas de ~100 mil grãos a cada
+    // meio segundo — o grão caía invisível e só materializava na próxima leitura.
+    // `slots` é contado aqui, na hora de semear; o que ainda não nasceu não tem
+    // o bit de vida e o vertex shader já o descarta.
+    pass.draw(this.slots || 1);
     pass.end();
     device.queue.submit([enc.finish()]);
   }
