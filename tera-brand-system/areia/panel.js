@@ -1,7 +1,7 @@
 /* Lab 02 · Areia — painel de ajustes gerado a partir do schema de params.js.
    Não conhece a simulação: só lê/escreve valores e avisa quem o criou. */
 
-import { PARAMS, GROUPS, PRESETS, DEFAULTS, format } from './params.js?v=17';
+import { PARAMS, GROUPS, PRESETS, DEFAULTS, format } from './params.js?v=24';
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -18,7 +18,9 @@ export class Panel {
     this.values = values;
     this.onChange = onChange;
     this.scope = scope;
-    this.keys = Object.keys(PARAMS).filter((k) => !PARAMS[k].scope || PARAMS[k].scope === scope);
+    // scope pode listar mais de um lab: '3d gpu'
+    this.keys = Object.keys(PARAMS)
+      .filter((k) => !PARAMS[k].scope || PARAMS[k].scope.split(' ').includes(scope));
     this.inputs = new Map();
     this.outputs = new Map();
     this.root = el('aside', 'painel mono');

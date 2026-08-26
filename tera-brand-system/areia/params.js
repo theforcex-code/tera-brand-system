@@ -5,15 +5,25 @@
 export const PARAMS = {
   // ---- tempo ----
   velocidade: {
-    group: 'tempo', label: 'Velocidade', min: 0, max: 4, step: 0.05, value: 1,
-    unit: '×', hint: 'Multiplica os passos por segundo. 0 congela.',
+    group: 'tempo', label: 'Velocidade', min: 0.1, max: 4, step: 0.05, value: 1,
+    unit: '×', hint: 'Multiplica os passos por segundo.',
+  },
+  fluxo: {
+    group: 'tempo', label: 'Fluxo', min: 0, max: 1, step: 0.01, value: 0.06, scope: 'gpu',
+    hint: 'Chance de o grão que assentou no fundo voltar ao topo. É o que mantém '
+      + 'o logo cheio e em movimento para sempre. Em 0, a areia assenta e para.',
+  },
+  dreno: {
+    group: 'tempo', label: 'Dreno', min: 1, max: 40, step: 1, value: 12, scope: 'gpu',
+    unit: '%', hint: 'Fração da altura, medida do fundo, que devolve areia ao topo. '
+      + 'Alto = mais matéria em giro; baixo = o volume quase não se mexe.',
   },
   duracao: {
-    group: 'tempo', label: 'Encher em', min: 1, max: 60, step: 0.5, value: 8,
+    group: 'tempo', label: 'Encher em', min: 1, max: 60, step: 0.5, value: 8, scope: '2d 3d',
     unit: 's', hint: 'Tempo alvo do preenchimento cronometrado (botão Encher).',
   },
   nivel: {
-    group: 'tempo', label: 'Nível', min: 5, max: 100, step: 1, value: 100,
+    group: 'tempo', label: 'Nível', min: 5, max: 100, step: 1, value: 100, scope: '2d 3d',
     unit: '%', hint: 'Quanto da área disponível o preenchimento ocupa. Em Vão é o interior '
       + 'das letras; em Duna é a tela inteira — 100% ali são milhões de grãos.',
   },
@@ -47,36 +57,50 @@ export const PARAMS = {
     group: 'fisica', label: 'Erosão', min: 0, max: 1, step: 0.01, value: 0, scope: '2d',
     hint: 'O vento arranca grãos já assentados e a duna migra. Custa caro — deixe em 0 se pesar.',
   },
+  turbulencia: {
+    group: 'fisica', label: 'Turbulência', min: 0, max: 0.6, step: 0.01, value: 0.15, scope: 'gpu',
+    hint: 'Cada camada de profundidade ganha uma corrente lateral própria. É o que '
+      + 'faz a matéria do fundo se comportar diferente da matéria da frente.',
+  },
+  camada: {
+    group: 'fisica', label: 'Camada', min: 4, max: 200, step: 2, value: 48, scope: 'gpu',
+    unit: ' px', hint: 'De quantas em quantas camadas a corrente inverte de lado.',
+  },
+  profundidade: {
+    group: 'fisica', label: 'Profundidade', min: 0, max: 40, step: 0.5, value: 12, scope: 'gpu',
+    hint: 'Quanto a cor caminha na paleta a cada camada de profundidade. É o que '
+      + 'faz a areia do fundo não ser igual à da frente.',
+  },
   direcao: {
-    group: 'fisica', label: 'Direção', min: 0, max: 360, step: 5, value: 0, scope: '3d',
+    group: 'fisica', label: 'Direção', min: 0, max: 360, step: 5, value: 0, scope: '3d gpu',
     unit: '°', hint: 'Para onde o vento sopra no plano do chão.',
   },
 
   // ---- matéria ----
   chuva: {
-    group: 'materia', label: 'Chuva', min: 1, max: 100, step: 1, value: 45,
-    unit: '%', hint: 'Densidade da chuva contínua.',
+    group: 'materia', label: 'Vazão', min: 1, max: 100, step: 1, value: 80,
+    unit: '%', hint: 'Quanta areia entra pelas bocas do desenho a cada passo.',
   },
   jato: {
-    group: 'materia', label: 'Jato', min: 1, max: 24, step: 1, value: 0,
+    group: 'materia', label: 'Jato', min: 1, max: 24, step: 1, value: 0, scope: '2d',
     unit: ' px', hint: 'Raio do despejo no toque. 0 usa a espessura do traço.',
   },
   deriva: {
-    group: 'materia', label: 'Deriva', min: 0, max: 6, step: 0.1, value: 1,
+    group: 'materia', label: 'Deriva', min: 0, max: 6, step: 0.1, value: 1.6,
     unit: '×', hint: 'Velocidade com que a cor caminha na paleta — desenha os estratos.',
   },
   semente: {
-    group: 'materia', label: 'Semente', min: 1, max: 9999, step: 1, value: 1,
+    group: 'materia', label: 'Semente', min: 1, max: 9999, step: 1, value: 1, scope: '2d 3d',
     hint: 'Mesma semente + mesmos parâmetros = mesma cena.',
   },
 
   // ---- câmera ----
   corte: {
-    group: 'camera', label: 'Corte', min: 0, max: 100, step: 1, value: 100, scope: '3d',
+    group: 'camera', label: 'Corte', min: 0, max: 100, step: 1, value: 100, scope: '3d gpu',
     unit: '%', hint: 'Fatia a rocha e mostra os estratos — cada camada é um instante do despejo.',
   },
   orbita: {
-    group: 'camera', label: 'Órbita', min: 0, max: 1, step: 0.05, value: 0.25, scope: '3d',
+    group: 'camera', label: 'Órbita', min: 0, max: 1, step: 0.05, value: 0.25, scope: '3d gpu',
     unit: '×', hint: 'Giro automático da câmera. Arraste para conduzir; role para aproximar.',
   },
 };
