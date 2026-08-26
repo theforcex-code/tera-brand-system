@@ -12,7 +12,7 @@
    Um grão que não consegue se mover dorme; quem esvazia uma célula acorda os três
    vizinhos de cima. Custo por passo ∝ grãos em movimento, não ao tamanho da tela. */
 
-import { LUT_SHIFT } from './palette.js?v=25';
+import { LUT_SHIFT } from './palette.js?v=26';
 
 const LCG_A = 1664525;
 const LCG_C = 1013904223;

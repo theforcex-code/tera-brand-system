@@ -28,6 +28,16 @@
    Posição empacotada em 32 bits (x:11 | y:10 | z:9 + bit de vida). */
 
 const WG = 256;
+
+/** Passo que percorre todas as bocas sem repetir: precisa ser coprimo com o
+    total. Sem isso a leva do quadro cai toda no mesmo pedaço do desenho. */
+function coprimo(n) {
+  const mdc = (a, b) => (b === 0 ? a : mdc(b, a % b));
+  for (const p of [7919, 6997, 5381, 3571, 1789, 997, 389, 97, 7]) {
+    if (p < n && mdc(p, n) === 1) return p;
+  }
+  return 1;
+}
 export const EMPTY = 0xffffffff;
 export const WALL = 0xfffffffe;
 export const LUT_ROWS = 4;
@@ -39,7 +49,7 @@ struct Params {
   motion: vec4<f32>,      // fall, wind, talude, frame
   extra: vec4<f32>,       // windX, windZ, spawnCount, lutPos
   flow: vec4<f32>,        // zSpread, recycle, drainY, mouthCount
-  depth: vec4<f32>,       // turbulência, frequência em Z, tempo, _
+  depth: vec4<f32>,       // turbulência, frequência em Z, tempo, passo entre bocas
 };
 
 const EMPTY: u32 = 0xffffffffu;
@@ -233,9 +243,12 @@ fn stepSand(@builtin(global_invocation_id) gid: vec3<u32>) {
 
 /** Semeadura. Duas escolhas importam aqui:
 
-    · cada thread pega a boca (k + deslocamento) — bocas DISTINTAS, não sorteadas.
-      Sorteando, várias threads caem na mesma boca e só uma entra; as outras já
-      teriam consumido um slot.
+    · cada thread pega a boca (k * passo + deslocamento) — bocas DISTINTAS, e
+      ESPALHADAS. Sorteando, várias threads caem na mesma boca e só uma entra.
+      Mas pegando bocas consecutivas (k + deslocamento) o preenchimento vira
+      blocos: a lista de bocas é ordenada por posição, e uma leva inteira cai no
+      mesmo pedaço do desenho. Com um passo coprimo com o número de bocas, a
+      mesma leva se espalha pelo logo todo e a areia volta a parecer chuva.
     · o slot alocado nunca é devolvido. Um atomicSub num contador compartilhado
       não desfaz nada: outra thread já pegou um índice maior, e o índice devolvido
       volta a ser entregue a um segundo grão. O primeiro fica órfão com a célula
@@ -248,7 +261,7 @@ fn emitSand(@builtin(global_invocation_id) gid: vec3<u32>) {
   let m = u32(P.flow.w);
   if (m == 0u) { return; }
   var rng = hash(k ^ hash(u32(P.motion.w) * 2654435761u));
-  let b = mouths[(k + hash(u32(P.motion.w))) % m];
+  let b = mouths[(k * u32(P.depth.w) + hash(u32(P.motion.w))) % m];
   let x = i32(b & 2047u);
   let y = i32((b >> 11u) & 1023u);
   let z = i32((b >> 21u) & 511u);
@@ -323,6 +336,7 @@ export class SandGPU {
     this.dims = dims;
     this.max = maxGrains;
     this.mouthCount = mouthCount;
+    this.mouthStride = coprimo(mouthCount);
     this.count = 0;        // grãos vivos (lido da GPU, para exibição)
     this.slots = 0;        // slots já alocados — só cresce, e é ele que dimensiona o passo
     this.frame = 0;
@@ -489,6 +503,7 @@ export class SandGPU {
     f[12] = p.turbulencia;
     f[13] = p.zFreq;
     f[14] = p.tempo;
+    f[15] = this.mouthStride;
     this.device.queue.writeBuffer(this.paramBuf, 0, this.params);
   }
 

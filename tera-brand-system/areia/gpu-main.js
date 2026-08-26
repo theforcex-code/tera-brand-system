@@ -12,12 +12,12 @@
 
    Tudo o que governa isso está aberto no painel e cabe na URL. */
 
-import { loadWordmark, fitWordmark, rasterizeWordmark } from './wordmark.js?v=25';
-import { PALETTES, buildLut } from './palette.js?v=25';
-import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=25';
-import { OrbitCamera } from './gpu/camera.js?v=25';
-import { fromSearch, toSearch } from './params.js?v=25';
-import { Panel } from './panel.js?v=25';
+import { loadWordmark, fitWordmark, rasterizeWordmark } from './wordmark.js?v=26';
+import { PALETTES, buildLut } from './palette.js?v=26';
+import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=26';
+import { OrbitCamera } from './gpu/camera.js?v=26';
+import { fromSearch, toSearch } from './params.js?v=26';
+import { Panel } from './panel.js?v=26';
 
 /* Perfis de custo. A versão anterior enchia 13,5 milhões de grãos e desenhava
    TODOS a cada quadro — numa tela de 1,2 milhão de pixels, isso é ~11 grãos por
@@ -34,7 +34,11 @@ const REPOUSO_PASSOS = 4;                   // cheio e sem fluxo: 1 passo a cada
 const FIT = { marginX: 0.05, marginY: 0.1, yBias: 0.5 };
 const CLEAR = [0.039, 0.035, 0.031, 1];
 const DRIFT_PER_SECOND = 1 / 26;      // a 1× de deriva, um ciclo de paleta a cada 26 s
-const SPAWN_BASE = 90000;             // candidatos por passo a 100% de vazão
+/* Vazão. A versão anterior soltava 90 mil grãos por passo — 144 mil por quadro,
+   e a cavidade inteira fechava em meio segundo: não dava tempo de ver grão
+   nenhum caindo, o logo simplesmente aparecia em blocos. Com 4 mil por passo o
+   preenchimento leva uns 12 segundos e a areia volta a cair como chuva. */
+const SPAWN_BASE = 4000;
 
 const canvas = document.getElementById('areia');
 const hudEl = document.getElementById('hud');

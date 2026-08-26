@@ -6,12 +6,12 @@
 
    O volume gira em qualquer direção, e a caixa que o delimita liga e desliga. */
 
-import { loadWordmark, fitWordmark, rasterizeWordmark } from './wordmark.js?v=25';
-import { SandVolume } from './sand3d.js?v=25';
-import { Scene3D } from './scene3d.js?v=25';
-import { PALETTES, buildLut, lutIndex } from './palette.js?v=25';
-import { fromSearch, toSearch } from './params.js?v=25';
-import { Panel } from './panel.js?v=25';
+import { loadWordmark, fitWordmark, rasterizeWordmark } from './wordmark.js?v=26';
+import { SandVolume } from './sand3d.js?v=26';
+import { Scene3D } from './scene3d.js?v=26';
+import { PALETTES, buildLut, lutIndex } from './palette.js?v=26';
+import { fromSearch, toSearch } from './params.js?v=26';
+import { Panel } from './panel.js?v=26';
 
 const GRID = { nx: 384, ny: 184, nz: 28 };   // a caixa abraça o wordmark de perto
 const MAX_SETTLED = 620000;     // teto da areia dentro do logo
