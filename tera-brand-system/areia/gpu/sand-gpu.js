@@ -67,15 +67,16 @@ const RESERVING: u32 = 0xfffffffdu;   // célula tomada, grão ainda sem índice
 /** Reserva a célula vazia. Insiste enquanto ela continuar vazia — desistir na
     primeira falha espúria custaria um movimento que era legítimo. */
 fn claimCell(idx: u32, mine: u32) -> bool {
-  loop {
+  for (var t = 0u; t < 4u; t = t + 1u) {     // teto: um spin sem fim numa GPU trava a tela
     let r = atomicCompareExchangeWeak(&grid[idx], EMPTY, mine);
     if (r.exchanged) { return true; }
     if (r.old_value != EMPTY) { return false; }
   }
+  return false;
 }
 
 fn releaseCell(idx: u32, mine: u32) {
-  loop {
+  for (var t = 0u; t < 4u; t = t + 1u) {
     let r = atomicCompareExchangeWeak(&grid[idx], mine, EMPTY);
     if (r.exchanged) { return; }
     if (r.old_value != mine) { return; }

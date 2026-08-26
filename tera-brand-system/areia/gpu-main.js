@@ -12,14 +12,25 @@
 
    Tudo o que governa isso está aberto no painel e cabe na URL. */
 
-import { loadWordmark, fitWordmark, rasterizeWordmark } from './wordmark.js?v=24';
-import { PALETTES, buildLut } from './palette.js?v=24';
-import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=24';
-import { OrbitCamera } from './gpu/camera.js?v=24';
-import { fromSearch, toSearch } from './params.js?v=24';
-import { Panel } from './panel.js?v=24';
+import { loadWordmark, fitWordmark, rasterizeWordmark } from './wordmark.js?v=25';
+import { PALETTES, buildLut } from './palette.js?v=25';
+import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=25';
+import { OrbitCamera } from './gpu/camera.js?v=25';
+import { fromSearch, toSearch } from './params.js?v=25';
+import { Panel } from './panel.js?v=25';
 
-const TARGET = { nx: 1024, ny: 576, nzMax: 208 };  // x:11 bits, y:10, z:9
+/* Perfis de custo. A versão anterior enchia 13,5 milhões de grãos e desenhava
+   TODOS a cada quadro — numa tela de 1,2 milhão de pixels, isso é ~11 grãos por
+   pixel, quase todos escondidos atrás dos outros. Custo real, resultado
+   invisível: a GPU ficava saturada o tempo inteiro e a máquina esquentava.
+   O perfil médio guarda a mesma leitura com 6× menos matéria. */
+const PERFIS = {
+  leve:  { nx: 512,  ny: 288, nz: 32 },     // ~0,5 M grãos
+  medio: { nx: 768,  ny: 432, nz: 64 },     // ~2,3 M grãos
+  alto:  { nx: 1024, ny: 576, nz: 128 },    // ~8 M grãos — só com GPU sobrando
+};
+const FPS_ALVO = 30;                        // teto: acima disso ninguém vê diferença
+const REPOUSO_PASSOS = 4;                   // cheio e sem fluxo: 1 passo a cada N quadros
 const FIT = { marginX: 0.05, marginY: 0.1, yBias: 0.5 };
 const CLEAR = [0.039, 0.035, 0.031, 1];
 const DRIFT_PER_SECOND = 1 / 26;      // a 1× de deriva, um ciclo de paleta a cada 26 s
@@ -29,6 +40,8 @@ const canvas = document.getElementById('areia');
 const hudEl = document.getElementById('hud');
 const query = new URLSearchParams(location.search);
 const values = fromSearch(location.search);
+const perfilNome = PERFIS[query.get('q')] ? query.get('q') : 'medio';
+const TARGET = PERFIS[perfilNome];
 
 const state = {
   palette: PALETTES[query.get('paleta')] ? query.get('paleta') : 'plasma',
@@ -138,6 +151,18 @@ function physics() {
 
 // ---------- laço ----------
 
+/** Vale a pena rodar a física neste quadro?
+
+    Com a cavidade cheia e o fluxo baixo, quase nada se move — mas cada passo
+    ainda lança uma thread por grão. Em repouso, espaçamos os passos: a cor
+    continua rolando (isso é de graça, mora no vertex shader) e o olho não
+    percebe a diferença, enquanto a GPU descansa. */
+function precisaSimular() {
+  if (!isFull()) return true;
+  if (values.fluxo <= 0.001) return frameNo % (REPOUSO_PASSOS * 4) === 0;
+  return frameNo % REPOUSO_PASSOS === 0;
+}
+
 let last = performance.now();
 let frameNo = 0;
 const perf = { simMs: 0, drawMs: 0, fps: 0, acc: 0, n: 0 };
@@ -146,10 +171,11 @@ const perf = { simMs: 0, drawMs: 0, fps: 0, acc: 0, n: 0 };
     chamado à mão em diagnóstico — aba em segundo plano não recebe rAF. */
 function tick(dt) {
   const t0 = performance.now();
-  if (!state.paused && state.running) {
+  if (!state.paused && state.running && precisaSimular()) {
     const steps = Math.max(1, Math.round(values.velocidade * 2));
     const phys = physics();
-    const spawn = Math.round(SPAWN_BASE * (values.chuva / 100));
+    // cheio: as bocas estão tomadas e semear só gasta thread à toa
+    const spawn = isFull() ? 0 : Math.round(SPAWN_BASE * (values.chuva / 100));
     for (let s = 0; s < steps; s++) sim.step(phys, spawn);
     state.simTime += dt;
   }
@@ -169,10 +195,18 @@ function tick(dt) {
 
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (now - last) / 1000);
+  // aba escondida não desenha nem simula: em segundo plano isso só esquentava a placa
+  if (document.hidden) {
+    last = now;
+    return;
+  }
+  const desde = now - last;
+  if (desde < 1000 / FPS_ALVO - 1) return;        // teto de quadros
+  const dt = Math.min(0.05, desde / 1000);
   last = now;
   const [simMs, drawMs] = tick(dt);
 
+  frameNo++;
   perf.simMs += simMs;
   perf.drawMs += drawMs;
   perf.acc += dt;
@@ -186,7 +220,7 @@ function frame(now) {
     perf.n = 0;
     perf.simMs = 0;
     perf.drawMs = 0;
-    if (++frameNo % 2 === 0) sim.readCount().catch(() => {});
+    sim.readCount().catch(() => {});
   }
 }
 
@@ -199,6 +233,7 @@ function updateHud() {
     `sim ${perf.simMs.toFixed(1)} ms`,
   ];
   if (isFull()) parts.push('cheio · circulando');
+  parts.push(perfilNome);
   if (state.paused) parts.push('pausa');
   hudEl.textContent = parts.join(' · ');
 }
@@ -280,6 +315,14 @@ const KEYS = {
 };
 
 function wireUi() {
+  document.querySelectorAll('[data-perfil]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.perfil === perfilNome));
+    b.addEventListener('click', () => {         // muda o tamanho da grade: recarrega
+      const q = new URLSearchParams(location.search);
+      q.set('q', b.dataset.perfil);
+      location.search = q.toString();
+    });
+  });
   document.querySelectorAll('[data-palette]').forEach((b) => {
     b.addEventListener('click', () => setPalette(b.dataset.palette));
   });
@@ -317,7 +360,7 @@ async function init() {
     if (!probe) throw new Error('WebGPU indisponível — use Chrome ou Edge recentes');
     // a profundidade é o que sobra do limite de buffer do adaptador
     const budget = Math.min(probe.limits.maxStorageBufferBindingSize, probe.limits.maxBufferSize);
-    const nz = Math.max(16, Math.min(TARGET.nzMax, Math.floor(budget / 4 / (TARGET.nx * TARGET.ny))));
+    const nz = Math.max(16, Math.min(TARGET.nz, Math.floor(budget / 4 / (TARGET.nx * TARGET.ny))));
     dims = { nx: TARGET.nx, ny: TARGET.ny, nz };
 
     const mask = buildMask(wordmark, dims);
