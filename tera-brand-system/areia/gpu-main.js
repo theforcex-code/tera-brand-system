@@ -12,12 +12,15 @@
 
    Tudo o que governa isso está aberto no painel e cabe na URL. */
 
-import { loadWordmark, fitWordmark, rasterizeWordmark } from './wordmark.js?v=27';
-import { PALETTES, buildLut } from './palette.js?v=27';
-import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=27';
-import { OrbitCamera } from './gpu/camera.js?v=27';
-import { fromSearch, toSearch } from './params.js?v=27';
-import { Panel } from './panel.js?v=27';
+import {
+  loadWordmark, fitWordmark, rasterizeWordmark,
+  shapeFromSearch, wireShapeButtons, DEFAULT_SHAPE,
+} from './wordmark.js?v=29';
+import { PALETTES, buildLut } from './palette.js?v=29';
+import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=29';
+import { OrbitCamera } from './gpu/camera.js?v=29';
+import { fromSearch, toSearch } from './params.js?v=29';
+import { Panel } from './panel.js?v=29';
 
 /* Perfis de custo. A versão anterior enchia 13,5 milhões de grãos e desenhava
    TODOS a cada quadro — numa tela de 1,2 milhão de pixels, isso é ~11 grãos por
@@ -47,6 +50,7 @@ const query = new URLSearchParams(location.search);
 const values = fromSearch(location.search);
 const perfilNome = PERFIS[query.get('q')] ? query.get('q') : 'medio';
 const TARGET = PERFIS[perfilNome];
+const forma = shapeFromSearch();
 
 const state = {
   palette: PALETTES[query.get('paleta')] ? query.get('paleta') : 'plasma',
@@ -333,8 +337,12 @@ let urlTimer = 0;
 function syncUrl() {
   clearTimeout(urlTimer);
   urlTimer = setTimeout(() => {
+    // forma e perfil precisam sobreviver: são lidos na carga, e sem eles esta
+    // reescrita apagava a escolha 400 ms depois de o lab abrir
     const q = toSearch(values, {
       paleta: state.palette === 'plasma' ? undefined : state.palette,
+      forma: forma === DEFAULT_SHAPE ? undefined : forma,
+      q: perfilNome === 'medio' ? undefined : perfilNome,
       semdescritor: state.descritor ? undefined : true,
     });
     history.replaceState(null, '', q ? `?${q}` : location.pathname);
@@ -354,6 +362,7 @@ const KEYS = {
 };
 
 function wireUi() {
+  wireShapeButtons(forma);
   document.querySelectorAll('[data-perfil]').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.perfil === perfilNome));
     b.addEventListener('click', () => {         // muda o tamanho da grade: recarrega
@@ -394,7 +403,7 @@ function fail(msg) {
 
 async function init() {
   try {
-    const wordmark = await loadWordmark();
+    const wordmark = await loadWordmark(forma);
     const probe = await navigator.gpu?.requestAdapter();
     if (!probe) throw new Error('WebGPU indisponível — use Chrome ou Edge recentes');
     // a profundidade é o que sobra do limite de buffer do adaptador

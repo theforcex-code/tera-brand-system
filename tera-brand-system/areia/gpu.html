@@ -289,6 +289,11 @@ button:active { transform: translateY(1px); }
 
   <nav class="bar bar--bottom mono" aria-label="Controles">
     <div class="bar__controls">
+      <div class="group" role="group" aria-label="Forma">
+        <button type="button" data-forma="cliente" aria-pressed="false">Cliente</button>
+        <button type="button" data-forma="evoluido" aria-pressed="true">Evoluído</button>
+        <button type="button" data-forma="versal" aria-pressed="false">Versal</button>
+      </div>
       <div class="group" role="group" aria-label="Paleta">
         <button type="button" data-palette="plasma" aria-pressed="true" title="Espectro Plasma (P)">Plasma</button>
         <button type="button" data-palette="subsolo" aria-pressed="false" title="Estratos de terra (P)">Subsolo</button>
@@ -313,6 +318,6 @@ button:active { transform: translateY(1px); }
   </nav>
 </main>
 
-<script type="module" src="gpu-main.js?v=27"></script>
+<script type="module" src="gpu-main.js?v=29"></script>
 </body>
 </html>

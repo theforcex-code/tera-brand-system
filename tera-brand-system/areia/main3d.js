@@ -6,12 +6,17 @@
 
    O volume gira em qualquer direção, e a caixa que o delimita liga e desliga. */
 
-import { loadWordmark, fitWordmark, rasterizeWordmark } from './wordmark.js?v=27';
-import { SandVolume } from './sand3d.js?v=27';
-import { Scene3D } from './scene3d.js?v=27';
-import { PALETTES, buildLut, lutIndex } from './palette.js?v=27';
-import { fromSearch, toSearch } from './params.js?v=27';
-import { Panel } from './panel.js?v=27';
+import {
+  loadWordmark, fitWordmark, rasterizeWordmark,
+  shapeFromSearch, wireShapeButtons, DEFAULT_SHAPE,
+} from './wordmark.js?v=29';
+import { SandVolume } from './sand3d.js?v=29';
+import { Scene3D } from './scene3d.js?v=29';
+import { PALETTES, buildLut, lutIndex } from './palette.js?v=29';
+import { fromSearch, toSearch } from './params.js?v=29';
+import { Panel } from './panel.js?v=29';
+
+const forma = shapeFromSearch();
 
 const GRID = { nx: 384, ny: 184, nz: 28 };   // a caixa abraça o wordmark de perto
 const MAX_SETTLED = 620000;     // teto da areia dentro do logo
@@ -364,8 +369,10 @@ let urlTimer = 0;
 function syncUrl() {
   clearTimeout(urlTimer);
   urlTimer = setTimeout(() => {
+    // a forma é lida na carga: sem ela aqui, esta reescrita apagaria a escolha
     const q = toSearch(values, {
       paleta: state.palette === 'plasma' ? undefined : state.palette,
+      forma: forma === DEFAULT_SHAPE ? undefined : forma,
       chovendo: state.raining || undefined,
       caixa: state.box || undefined,
       semdescritor: state.descritor ? undefined : true,
@@ -389,6 +396,7 @@ const KEYS = {
 };
 
 function wireUi() {
+  wireShapeButtons(forma);
   document.querySelectorAll('[data-palette]').forEach((b) => {
     b.addEventListener('click', () => setPalette(b.dataset.palette));
   });
@@ -418,7 +426,7 @@ function wireUi() {
 }
 
 async function init() {
-  const wordmark = await loadWordmark();
+  const wordmark = await loadWordmark(forma);
   const mask = buildMask(wordmark);
   sources = buildSources(mask);
   volume = new SandVolume(GRID.nx, GRID.ny, GRID.nz, MAX_SETTLED, MAX_FLYING);

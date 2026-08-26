@@ -32,6 +32,26 @@ def pt(cx, cy, r, deg):
     return (cx + r * math.cos(a), cy - r * math.sin(a))
 
 
+# Coletor de pontos: line() e arc() anotam por onde passaram, e take_bbox()
+# devolve a caixa REAL do desenho. Sem isto o viewBox vira chute — a cauda do
+# "e" do cliente desce abaixo da baseline e ficava cortada.
+_PTS = []
+
+
+def _mark(*pts):
+    _PTS.extend(pts)
+
+
+def take_bbox(weight):
+    """Caixa do que foi desenhado desde a última chamada, já com a espessura."""
+    global _PTS
+    xs = [q[0] for q in _PTS]
+    ys = [q[1] for q in _PTS]
+    _PTS = []
+    h = weight / 2
+    return min(xs) - h, min(ys) - h, max(xs) + h, max(ys) + h
+
+
 def arc(cx, cy, r, a0, a1):
     """Path de arco de a0 a a1 (graus, convenção matemática, y de tela).
 
@@ -45,10 +65,13 @@ def arc(cx, cy, r, a0, a1):
     x1, y1 = pt(cx, cy, r, a1)
     large = 1 if abs(a1 - a0) > 180 else 0
     sweep = 0 if a1 > a0 else 1
+    passo = 1 if a1 > a0 else -1
+    _mark(*[pt(cx, cy, r, a0 + passo * i) for i in range(int(abs(a1 - a0)) + 1)], (x1, y1))
     return f'M {x0:.2f} {y0:.2f} A {r} {r} 0 {large} {sweep} {x1:.2f} {y1:.2f}'
 
 
 def line(x0, y0, x1, y1):
+    _mark((x0, y0), (x1, y1))
     return f'M {x0:.2f} {y0:.2f} L {x1:.2f} {y1:.2f}'
 
 
@@ -111,12 +134,16 @@ def glyph_a(x):
     return paths, 2 * R + T + T
 
 
-def build_wordmark():
-    """Monta t-é-r-a; retorna paths e caixa total. Kerning óptico por par."""
+def build_wordmark(epsilon=False):
+    """Monta t-é-r-a; retorna paths e caixa total. Kerning óptico por par.
+
+    epsilon=True devolve o desenho como o cliente mandou, com o "e" invertido —
+    arco aberto mais bico, sem a barra do equador."""
     paths = []
     x = T / 2 + 2
     pair_gap = {0: 16, 1: 20, 2: 20}            # t-é fecha (barra + curva geram ar)
-    for i, g in enumerate((glyph_t, glyph_e, glyph_r, glyph_a)):
+    glyphs = (glyph_t, lambda gx: glyph_e(gx, epsilon=epsilon), glyph_r, glyph_a)
+    for i, g in enumerate(glyphs):
         p, adv = g(x)
         paths += p
         x += adv + pair_gap.get(i, GAP)
@@ -124,10 +151,107 @@ def build_wordmark():
     return paths, width
 
 
-def stroke_group(paths, color):
+# ---------- caixa alta bold ----------
+#
+# Mesma gramática — um raio, uma espessura — subida para o corpo de caixa alta.
+# A espessura dobra (T=20 -> TB=34) porque em versal o contraforma é maior: com
+# a monolinear fina o TÉRA fica esquelético ao lado do wordmark minúsculo.
+# O A é ARCADO, não pontiagudo: o ápice em bico não segura areia nenhuma, e o
+# arco é o gesto que rege o resto do alfabeto.
+
+TB = 34        # espessura da versal
+CAP = 56       # topo da versal (a baseline segue em BASE=200)
+MIDC = (CAP + BASE) / 2
+CGAP = 28      # respiro entre versais (24 colava o travessão do T no braço do E)
+
+
+def pe_na_base(sx, sy, ex, base=BASE):
+    """Onde a diagonal precisa terminar para que a PONTA encoste na baseline.
+
+    Ponta reta (butt) é cortada perpendicular ao traço: o canto de baixo desce
+    (TB/2)·|dx|/L além do ponto final. Sem descontar isso, a perna do R furava a
+    baseline em 14 unidades e brigava com o A ao lado."""
+    ey = base
+    for _ in range(8):                        # ponto fixo: converge em 3 voltas
+        dx, dy = ex - sx, ey - sy
+        L = math.hypot(dx, dy) or 1
+        ey = base - (TB / 2) * abs(dx) / L
+    return ey
+
+
+def cap_t(x):
+    w = 110
+    return [
+        line(x, CAP + TB / 2, x + w, CAP + TB / 2),      # travessão
+        line(x + w / 2, CAP, x + w / 2, BASE),           # haste centrada
+    ], w
+
+
+def cap_e(x, accent=True):
+    w = 104
+    paths = [
+        line(x + TB / 2, CAP, x + TB / 2, BASE),         # espinha
+        line(x, CAP + TB / 2, x + w, CAP + TB / 2),      # braço
+        line(x, MIDC, x + w * 0.86, MIDC),               # barra do meio, mais curta
+        line(x, BASE - TB / 2, x + w, BASE - TB / 2),    # pé
+    ]
+    if accent:
+        # o acento continua sendo a barra vertical solta — é a assinatura do gesto
+        paths.append(line(x + w / 2, 4, x + w / 2, 44))
+    return paths, w
+
+
+def cap_r(x):
+    w = 104
+    rb = R                                               # o raio do sistema, intacto
+    cy = CAP + TB / 2 + rb
+    sx, sy = x + TB / 2 + 12, cy + rb - 12               # sai do encontro bojo/espinha
+    ex = x + w - 2
+    return [
+        line(x + TB / 2, CAP, x + TB / 2, BASE),         # espinha
+        arc(x + TB / 2, cy, rb, 90, -90),                # bojo: meio círculo à direita
+        line(sx, sy, ex, pe_na_base(sx, sy, ex)),        # perna, apoiada na baseline
+    ], w
+
+
+def cap_a(x):
+    w = 116
+    ra = (w - TB) / 2
+    cx = x + w / 2
+    cy = CAP + TB / 2 + ra
+    return [
+        arc(cx, cy, ra, 180, 0),                         # arco no lugar do ápice
+        line(cx - ra, cy, cx - ra, BASE),                # perna esquerda
+        line(cx + ra, cy, cx + ra, BASE),                # perna direita
+        line(cx - ra, MIDC + 40, cx + ra, MIDC + 40),    # travessa
+    ], w
+
+
+def build_caps():
+    """TÉRA em versal bold. Retorna paths, largura e topo do desenho."""
+    paths = []
+    x = 2
+    for g in (cap_t, cap_e, cap_r, cap_a):
+        p, adv = g(x)
+        paths += p
+        x += adv + CGAP
+    return paths, x - CGAP + 2
+
+
+def stroke_group(paths, color, weight=T):
     d = ' '.join(paths)
     return (f'<path d="{d}" fill="none" stroke="{color}" '
-            f'stroke-width="{T}" stroke-linecap="butt"/>')
+            f'stroke-width="{weight}" stroke-linecap="butt"/>')
+
+
+def svg_shape(paths, caixa, weight=T, color=INK, pad=40):
+    """SVG cru de uma forma, do jeito que o lab de areia lê: um <path> só, com a
+    espessura no atributo e o viewBox na caixa medida mais a área de proteção."""
+    x0, y0, x1, y1 = caixa
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" '
+            f'viewBox="{x0 - pad:.2f} {y0 - pad:.2f} '
+            f'{x1 - x0 + 2 * pad:.2f} {y1 - y0 + 2 * pad:.2f}">'
+            f'<g>{stroke_group(paths, color, weight)}</g></svg>')
 
 
 # ---------- SVGs ----------
@@ -261,7 +385,15 @@ def main():
     paths, w = build_wordmark()
     h = BASE - ASC + T
 
+    take_bbox(0)                                   # descarta o traçado já colhido
+    eps_paths, _ = build_wordmark(epsilon=True)
+    eps_box = take_bbox(T)
+    cap_paths, _ = build_caps()
+    cap_box = take_bbox(TB)
+
     files = {
+        'tera_shape_cliente.svg': svg_shape(eps_paths, eps_box),
+        'tera_shape_caps.svg': svg_shape(cap_paths, cap_box, weight=TB),
         'tera_ink_subsolo.svg': svg_ink(paths, w, h, INK),
         'tera_ink_cal_sobre_subsolo.svg': svg_ink(paths, w, h, CAL, bg=INK),
         'tera_materia.svg': svg_materia(paths, w, h),

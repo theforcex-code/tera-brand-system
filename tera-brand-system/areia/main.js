@@ -5,11 +5,16 @@
    Toda a física e o tempo vêm de params.js: o painel escreve em `values`, este
    módulo traduz `values` em regra por passo. A cena inteira cabe na URL. */
 
-import { loadWordmark, fitWordmark, rasterizeWordmark, columnRunTops } from './wordmark.js?v=27';
-import { SandField } from './sand.js?v=27';
-import { PALETTES, buildLut, packRGB, hexToRgb, lutIndex } from './palette.js?v=27';
-import { fromSearch, toSearch, DEFAULTS } from './params.js?v=27';
-import { Panel } from './panel.js?v=27';
+import {
+  loadWordmark, fitWordmark, rasterizeWordmark, columnRunTops,
+  shapeFromSearch, wireShapeButtons, DEFAULT_SHAPE,
+} from './wordmark.js?v=29';
+import { SandField } from './sand.js?v=29';
+import { PALETTES, buildLut, packRGB, hexToRgb, lutIndex } from './palette.js?v=29';
+import { fromSearch, toSearch, DEFAULTS } from './params.js?v=29';
+import { Panel } from './panel.js?v=29';
+
+const forma = shapeFromSearch();
 
 const STEP_HZ = 120;            // passos de simulação por segundo a 1×
 const MAX_STEPS_PER_FRAME = 6;
@@ -449,9 +454,11 @@ let urlTimer = 0;
 function syncUrl() {
   clearTimeout(urlTimer);
   urlTimer = setTimeout(() => {
+    // a forma é lida na carga: sem ela aqui, esta reescrita apagaria a escolha
     const q = toSearch(values, {
       modo: state.mode === 'duna' ? 'duna' : undefined,
       paleta: state.palette === 'plasma' ? undefined : state.palette,
+      forma: forma === DEFAULT_SHAPE ? undefined : forma,
       chovendo: state.raining || undefined,
     });
     history.replaceState(null, '', q ? `?${q}` : location.pathname);
@@ -472,6 +479,7 @@ const KEYS = {
 };
 
 function wireUi() {
+  wireShapeButtons(forma);
   document.querySelectorAll('[data-mode]').forEach((b) => {
     b.addEventListener('click', () => setMode(b.dataset.mode));
   });
@@ -531,7 +539,7 @@ function wireResize() {
 }
 
 async function init() {
-  wordmark = await loadWordmark();
+  wordmark = await loadWordmark(forma);
   panel = new Panel(values, onParam);
   wireUi();
   build();
