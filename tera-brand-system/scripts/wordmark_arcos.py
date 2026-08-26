@@ -151,26 +151,36 @@ def build_wordmark(epsilon=False):
     return paths, width
 
 
-# ---------- caixa alta bold ----------
+# ---------- caixa alta ----------
 #
-# Mesma gramática — um raio, uma espessura — subida para o corpo de caixa alta.
-# A espessura dobra (T=20 -> TB=34) porque em versal o contraforma é maior: com
-# a monolinear fina o TÉRA fica esquelético ao lado do wordmark minúsculo.
-# O A é ARCADO, não pontiagudo: o ápice em bico não segura areia nenhuma, e o
-# arco é o gesto que rege o resto do alfabeto.
+# Grotesca suica, nao geometrica: o pedido foi "mais atual, limpa, suica", e a
+# referencia e Helvetica/Univers. Tres coisas mudaram em relacao a primeira
+# tentativa, e todas tinham o mesmo defeito de origem — desenhar versal com a
+# gramatica da minuscula.
+#
+# · O bojo do R terminava a 68% da altura da versal. Sobrava tao pouco para a
+#   perna que ela virava uma estocada curta e ingreme. Numa grotesca o bojo
+#   fecha por volta de 58-60%, e a perna sai dali num angulo de ~40 graus.
+# · O A era arcado. Arco e o gesto que rege a MINUSCULA desta marca; em versal
+#   suica o A e triangular. Fica de apice chato — o bico puro nao segura areia
+#   nenhuma, e a chapa do apice tambem e detalhe corrente em grotesca.
+# · O traco era 34 num corpo de 144, razao 0,24. Helvetica Bold fica em ~0,20.
+#   Estava mais pesado que negrito, e pesado demais le como desenho, nao como
+#   tipo. Em 30 a razao cai para 0,21.
 
-TB = 34        # espessura da versal
+TB = 30        # espessura da versal (0,21 do corpo — negrito de grotesca)
 CAP = 56       # topo da versal (a baseline segue em BASE=200)
 MIDC = (CAP + BASE) / 2
-CGAP = 28      # respiro entre versais (24 colava o travessão do T no braço do E)
+CGAP = 26      # respiro entre versais
+APEX = CAP + TB / 2
 
 
 def pe_na_base(sx, sy, ex, base=BASE):
     """Onde a diagonal precisa terminar para que a PONTA encoste na baseline.
 
-    Ponta reta (butt) é cortada perpendicular ao traço: o canto de baixo desce
-    (TB/2)·|dx|/L além do ponto final. Sem descontar isso, a perna do R furava a
-    baseline em 14 unidades e brigava com o A ao lado."""
+    Ponta reta (butt) e cortada perpendicular ao traco: o canto de baixo desce
+    (TB/2)·|dx|/L alem do ponto final. Sem descontar isso, a perna do R e os pes
+    do A furam a baseline."""
     ey = base
     for _ in range(8):                        # ponto fixo: converge em 3 voltas
         dx, dy = ex - sx, ey - sy
@@ -179,56 +189,65 @@ def pe_na_base(sx, sy, ex, base=BASE):
     return ey
 
 
+def em_x(sx, sy, ex, ey, y):
+    """x da diagonal (sx,sy)-(ex,ey) na altura y — para encaixar a travessa."""
+    return sx + (ex - sx) * (y - sy) / (ey - sy)
+
+
 def cap_t(x):
-    w = 110
+    w = 106
     return [
-        line(x, CAP + TB / 2, x + w, CAP + TB / 2),      # travessão
+        line(x, CAP + TB / 2, x + w, CAP + TB / 2),      # travessao
         line(x + w / 2, CAP, x + w / 2, BASE),           # haste centrada
     ], w
 
 
 def cap_e(x, accent=True):
-    w = 104
+    w = 96
     paths = [
         line(x + TB / 2, CAP, x + TB / 2, BASE),         # espinha
-        line(x, CAP + TB / 2, x + w, CAP + TB / 2),      # braço
-        line(x, MIDC, x + w * 0.86, MIDC),               # barra do meio, mais curta
-        line(x, BASE - TB / 2, x + w, BASE - TB / 2),    # pé
+        line(x, CAP + TB / 2, x + w, CAP + TB / 2),      # braco
+        line(x, MIDC, x + w * 0.88, MIDC),               # barra do meio, mais curta
+        line(x, BASE - TB / 2, x + w, BASE - TB / 2),    # pe
     ]
     if accent:
-        # o acento continua sendo a barra vertical solta — é a assinatura do gesto
-        paths.append(line(x + w / 2, 4, x + w / 2, 44))
+        # a barra vertical solta continua sendo o acento: e a assinatura do
+        # gesto do cliente, e some se virar acento agudo convencional
+        paths.append(line(x + w / 2, 2, x + w / 2, 38))
     return paths, w
 
 
 def cap_r(x):
-    w = 104
-    rb = R                                               # o raio do sistema, intacto
+    w = 100
+    rb = 28                                              # bojo fecha a ~60% do corpo
     cy = CAP + TB / 2 + rb
-    sx, sy = x + TB / 2 + 12, cy + rb - 12               # sai do encontro bojo/espinha
-    ex = x + w - 2
+    sx, sy = x + TB / 2, cy + rb                         # a perna sai do fecho do bojo
+    ex = x + w - TB / 2
     return [
         line(x + TB / 2, CAP, x + TB / 2, BASE),         # espinha
-        arc(x + TB / 2, cy, rb, 90, -90),                # bojo: meio círculo à direita
-        line(sx, sy, ex, pe_na_base(sx, sy, ex)),        # perna, apoiada na baseline
+        arc(x + TB / 2, cy, rb, 90, -90),                # bojo: meio circulo a direita
+        line(sx, sy, ex, pe_na_base(sx, sy, ex)),        # perna reta, ~41 graus
     ], w
 
 
 def cap_a(x):
-    w = 116
-    ra = (w - TB) / 2
+    w = 112
     cx = x + w / 2
-    cy = CAP + TB / 2 + ra
+    lx, rx = x + TB / 2, x + w - TB / 2
+    ly = pe_na_base(cx, APEX, lx)
+    ry = pe_na_base(cx, APEX, rx)
+    trav = 172                                           # travessa baixa, como em grotesca
     return [
-        arc(cx, cy, ra, 180, 0),                         # arco no lugar do ápice
-        line(cx - ra, cy, cx - ra, BASE),                # perna esquerda
-        line(cx + ra, cy, cx + ra, BASE),                # perna direita
-        line(cx - ra, MIDC + 40, cx + ra, MIDC + 40),    # travessa
+        line(cx - TB * 0.52, APEX, cx + TB * 0.52, APEX),   # apice chato
+        line(cx, APEX, lx, ly),                             # diagonal esquerda
+        line(cx, APEX, rx, ry),                             # diagonal direita
+        line(em_x(cx, APEX, lx, ly, trav), trav,
+             em_x(cx, APEX, rx, ry, trav), trav),           # travessa entre as diagonais
     ], w
 
 
 def build_caps():
-    """TÉRA em versal bold. Retorna paths, largura e topo do desenho."""
+    """TERA em versal. Retorna paths e largura."""
     paths = []
     x = 2
     for g in (cap_t, cap_e, cap_r, cap_a):
