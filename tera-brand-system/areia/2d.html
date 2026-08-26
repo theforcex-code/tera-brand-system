@@ -5,20 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TÉRA — Lab 02 · Areia (2D)</title>
 <meta name="description" content="O wordmark Téra como areia interativa: grãos de 1 pixel com vento, talude e erosão, que caem e assentam em estratos dentro dos vãos das letras.">
-<link rel="icon" href="../assets/identidade/monogram_black.png">
+<link rel="icon" href="favicon.png">
 <style>
 /* Lab 02 · Areia. O logo é matéria: areia de 1 px com física, à la This is Sand.
    Duas leituras — Vão (a areia só existe dentro das letras) e Duna (o logo é parede). */
 
+/* dois src: o primeiro é a fonte do projeto, o segundo a cópia que viaja no
+   deploy — o navegador cai para a segunda quando a primeira não existe */
 @font-face {
   font-family: 'Space Mono';
-  src: url('../case/fonts/SpaceMono-Regular.ttf?v=1') format('truetype');
+  src: url('../case/fonts/SpaceMono-Regular.ttf?v=1') format('truetype'),
+       url('fonts/SpaceMono-Regular.ttf?v=1') format('truetype');
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
   font-family: 'Space Mono';
-  src: url('../case/fonts/SpaceMono-Bold.ttf?v=1') format('truetype');
+  src: url('../case/fonts/SpaceMono-Bold.ttf?v=1') format('truetype'),
+       url('fonts/SpaceMono-Bold.ttf?v=1') format('truetype');
   font-weight: 700;
   font-display: swap;
 }
