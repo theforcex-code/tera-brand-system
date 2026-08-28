@@ -1,0 +1,333 @@
+<title>téra · Repertório Modular</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=DM+Mono:wght@300;400;500&family=Newsreader:opsz,wght@6..72,300..600&display=swap">
+<style>
+:root{
+  --void:#000;--surface:#0B0C0D;--raised:#131517;--edge:#1F2225;--edge-hi:#34383C;
+  --ink:#EDEFF1;--muted:#767C81;--dim:#43484C;--pure:#FFF;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Newsreader",Georgia,serif;
+  --f-mono:"DM Mono",ui-monospace,Menlo,monospace;
+  --gut:clamp(20px,4vw,56px);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--void);color:var(--ink);font-family:var(--f-body);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:var(--gut)}
+
+.masthead{display:flex;flex-wrap:wrap;gap:30px 48px;align-items:flex-end;
+  justify-content:space-between;padding-bottom:26px;border-bottom:1px solid var(--edge)}
+.lede{max-width:42ch}
+.lede h1{font-family:var(--f-display);font-variation-settings:"wdth" 118,"wght" 700;
+  font-weight:700;font-size:clamp(32px,5.4vw,56px);line-height:.96;letter-spacing:-.02em;
+  margin:0 0 14px;text-wrap:balance;color:var(--pure)}
+.lede h1 em{font-style:normal;color:var(--dim)}
+.lede p{margin:0;color:var(--muted);font-size:16.5px}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 38px;margin:0;
+  font-family:var(--f-mono)}
+.facts dt{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin:0 0 3px}
+.facts dd{margin:0;font-size:12.5px;color:var(--ink)}
+
+.shead{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 18px;padding-bottom:13px;
+  margin-top:52px;border-bottom:1px solid var(--edge)}
+.shead h2{font-family:var(--f-display);font-variation-settings:"wdth" 106,"wght" 600;
+  font-weight:600;font-size:14px;letter-spacing:.14em;text-transform:uppercase;margin:0}
+.shead span{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+
+/* ---------- fichas ---------- */
+.rows{display:flex;flex-direction:column;gap:1px;background:var(--edge);
+  border:1px solid var(--edge);border-top:none}
+.row{background:var(--surface);display:grid;
+  grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:0;transition:background .2s}
+.row:hover{background:var(--raised)}
+@media(max-width:760px){.row{grid-template-columns:minmax(0,1fr)}}
+.who{padding:22px 26px;border-right:1px solid var(--edge)}
+@media(max-width:760px){.who{border-right:none;border-bottom:1px solid var(--edge);padding-bottom:14px}}
+.who h3{font-family:var(--f-display);font-variation-settings:"wdth" 108,"wght" 600;
+  font-weight:600;font-size:19px;margin:0 0 4px;color:var(--pure);line-height:1.15}
+.who .by{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted);
+  display:block;margin-bottom:9px}
+.who a{font-family:var(--f-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--dim);text-decoration:none;border-bottom:1px solid var(--edge-hi);padding-bottom:1px}
+.who a:hover{color:var(--ink);border-color:var(--ink)}
+.what{padding:22px 26px}
+.what p{margin:0 0 10px;font-size:15.5px;color:var(--muted);max-width:60ch}
+.what p:last-child{margin-bottom:0}
+.what strong{color:var(--ink);font-weight:600}
+.what em{color:var(--ink);font-style:italic}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;padding:3px 7px;margin:0 5px 6px 0;border:1px solid var(--edge-hi);
+  color:var(--muted)}
+.tag.hot{background:var(--pure);color:var(--void);border-color:var(--pure)}
+.tag.warn{border-color:var(--edge-hi);color:var(--dim)}
+
+/* ---------- eixo ---------- */
+.axis{margin-top:6px;border:1px solid var(--edge);background:var(--surface);padding:30px 26px 20px}
+.axis{overflow-x:auto}
+.axis svg{width:100%;min-width:620px;height:auto;display:block}
+.axis .cap{font-family:var(--f-mono);font-size:11px;color:var(--muted);margin:22px 0 0;
+  line-height:1.6;max-width:70ch}
+
+.note{margin-top:52px;padding-top:28px;border-top:1px solid var(--edge);
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:28px 42px}
+.note h4{font-family:var(--f-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim);margin:0 0 9px;font-weight:400}
+.note p{margin:0 0 11px;font-size:15.5px;color:var(--muted);max-width:46ch}
+.note p strong{color:var(--ink);font-weight:600}
+.note p em{color:var(--ink);font-style:italic}
+.colophon{margin-top:44px;padding-top:18px;border-top:1px solid var(--edge);display:flex;
+  flex-wrap:wrap;gap:8px 26px;justify-content:space-between;font-family:var(--f-mono);
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="lede">
+      <h1>O que já existe<br><em>de</em> modular</h1>
+      <p>Repertório reunido para a próxima etapa: identidades onde a luz preenche a matéria, tipografias modulares que já estão à venda, e a linhagem histórica da letra construída em grade.</p>
+    </div>
+    <dl class="facts">
+      <div><dt>Motivo</dt><dd>feedback 27.08</dd></div>
+      <div><dt>Eixos</dt><dd>identidade · fontes · modularidade</dd></div>
+      <div><dt>Links</dt><dd>verificados um a um</dd></div>
+      <div><dt>Behance</dt><dd>bloqueou o acesso</dd></div>
+    </dl>
+  </header>
+
+  <div class="shead">
+    <h2>1 · A tensão do projeto</h2>
+    <span>modularidade contra legibilidade — onde cada referência cai</span>
+  </div>
+  <div class="axis">
+    <svg viewBox="0 0 900 300" role="img" aria-label="Eixo: quanto mais modular, menos legível">
+      <defs>
+        <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+          <path d="M0,0 L9,4.5 L0,9 Z" fill="#43484C"/>
+        </marker>
+      </defs>
+      <line x1="40" y1="215" x2="860" y2="215" stroke="#34383C" stroke-width="1.5" marker-end="url(#ar)"/>
+      <text x="40" y="245" fill="#767C81" font-family="DM Mono, monospace" font-size="12">convencional, legível</text>
+      <text x="860" y="245" fill="#767C81" font-family="DM Mono, monospace" font-size="12" text-anchor="end">modular puro, ilegível</text>
+
+      <!-- zona aceitável -->
+      <rect x="150" y="60" width="330" height="155" fill="#FFFFFF" opacity="0.045"/>
+      <line x1="150" y1="60" x2="150" y2="215" stroke="#34383C" stroke-width="1" stroke-dasharray="3 4"/>
+      <line x1="480" y1="60" x2="480" y2="215" stroke="#34383C" stroke-width="1" stroke-dasharray="3 4"/>
+      <text x="315" y="48" fill="#EDEFF1" font-family="DM Mono, monospace" font-size="11"
+            letter-spacing="2" text-anchor="middle">ZONA QUE O CLIENTE PEDIU</text>
+
+      <g font-family="DM Mono, monospace" font-size="12.5" fill="#EDEFF1">
+        <circle cx="115" cy="215" r="4" fill="#767C81"/>
+        <text x="115" y="200" text-anchor="middle" fill="#767C81">DIN 1451</text>
+
+        <circle cx="205" cy="215" r="4" fill="#EDEFF1"/>
+        <text x="205" y="185" text-anchor="middle">Futura</text>
+
+        <circle cx="330" cy="215" r="5.5" fill="#FFFFFF"/>
+        <text x="330" y="200" text-anchor="middle" fill="#FFF">Gridnik</text>
+        <text x="330" y="140" text-anchor="middle" fill="#767C81" font-size="11">1974 · Crouwel</text>
+        <line x1="330" y1="150" x2="330" y2="190" stroke="#34383C" stroke-width="1"/>
+
+        <circle cx="440" cy="215" r="4" fill="#EDEFF1"/>
+        <text x="440" y="185" text-anchor="middle">Universal</text>
+        <text x="440" y="168" text-anchor="middle" fill="#767C81" font-size="11">1925 · Bayer</text>
+
+        <circle cx="560" cy="215" r="4" fill="#767C81"/>
+        <text x="560" y="200" text-anchor="middle" fill="#767C81">Kombinationsschrift</text>
+
+        <circle cx="690" cy="215" r="4" fill="#767C81"/>
+        <text x="690" y="185" text-anchor="middle" fill="#767C81">Bungee</text>
+
+        <circle cx="820" cy="215" r="5.5" fill="#43484C"/>
+        <text x="820" y="200" text-anchor="middle" fill="#43484C">New Alphabet</text>
+        <text x="820" y="140" text-anchor="middle" fill="#43484C" font-size="11">1967 · Crouwel</text>
+        <line x1="820" y1="150" x2="820" y2="190" stroke="#1F2225" stroke-width="1"/>
+      </g>
+    </svg>
+    <p class="cap">As duas pontas do eixo são do mesmo autor. Crouwel desenhou o extremo ilegível em 1967 e, sete anos depois, a versão que funciona. É esse o intervalo em que o téra tem de cair.</p>
+  </div>
+
+  <div class="shead">
+    <h2>2 · Fontes que já existem</h2>
+    <span>o que dá para licenciar em vez de desenhar do zero</span>
+  </div>
+  <div class="rows">
+
+    <div class="row">
+      <div class="who">
+        <h3>Gridnik</h3>
+        <span class="by">Wim Crouwel · 1974 · Olivetti</span>
+        <a href="https://en.wikipedia.org/wiki/Gridnik" target="_blank" rel="noopener">ver ficha</a>
+      </div>
+      <div class="what">
+        <span class="tag hot">a mais próxima do briefing</span>
+        <p>Desenhada para as máquinas de escrever elétricas da Olivetti, com o nome <em>Politene</em>. Monolinear, <strong>todos os caracteres construídos sobre uma grade quadrada, com os cantos cortados a 45°</strong>.</p>
+        <p>É exatamente a operação que o feedback descreve: grade como matriz, e um corte que dá personalidade sem tirar a leitura. O apelido veio de <em>Mr. Gridnik</em>, como Crouwel era chamado pela obsessão com grade.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="who">
+        <h3>New Alphabet</h3>
+        <span class="by">Wim Crouwel · 1967</span>
+        <a href="https://en.wikipedia.org/wiki/New_Alphabet" target="_blank" rel="noopener">ver ficha</a>
+      </div>
+      <div class="what">
+        <span class="tag warn">referência de limite, não de uso</span>
+        <p>Só traços horizontais e verticais, para caber na limitação do tubo de raios catódicos. O resultado: <strong>algumas letras não guardam nenhuma semelhança com a letra que representam</strong>.</p>
+        <p>Serve como o aviso mais claro que existe do que o feedback proíbe. Vale mostrar na apresentação justamente por isso — é o modular levado ao ponto em que a palavra deixa de ser a palavra. Ficou famosa na capa de <em>Substance</em>, do Joy Division.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="who">
+        <h3>Universal</h3>
+        <span class="by">Herbert Bayer · 1925 · Bauhaus</span>
+        <a href="https://en.wikipedia.org/wiki/Bauhaus_(typeface)" target="_blank" rel="noopener">ver ficha</a>
+      </div>
+      <div class="what">
+        <span class="tag">só minúsculas</span>
+        <p>Alfabeto reduzido a círculo, quadrado e reta, e <strong>sem caixa alta</strong> — Bayer defendia que duas caixas eram redundância.</p>
+        <p>Interessa ao téra por um detalhe: o wordmark de vocês já é minúsculo. Há um argumento histórico pronto para sustentar essa escolha diante do cliente.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="who">
+        <h3>Kombinationsschrift</h3>
+        <span class="by">Josef Albers · 1931</span>
+        <a href="https://en.wikipedia.org/wiki/Josef_Albers" target="_blank" rel="noopener">ver ficha</a>
+      </div>
+      <div class="what">
+        <span class="tag">kit de peças</span>
+        <p>O alfabeto inteiro montado a partir de <strong>três formas só</strong>: quadrado, quarto de círculo e meio quadrado. Recortado em vidro, não desenhado.</p>
+        <p>É a prova de conceito mais radical de "kit de peças" que existe — e é o princípio por trás da variante <em>Módulo</em> da nossa prancha.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="who">
+        <h3>Bungee</h3>
+        <span class="by">David Jonathan Ross · Google Fonts</span>
+        <a href="https://fonts.google.com/specimen/Bungee" target="_blank" rel="noopener">ver e baixar</a>
+      </div>
+      <div class="what">
+        <span class="tag">gratuita</span>
+        <p>Feita para sinalização urbana: monta na horizontal e na <strong>vertical</strong>, com camadas separadas de preenchimento, contorno e sombra.</p>
+        <p>A lógica de camadas destacáveis é diretamente aproveitável — é como a marca poderia ter matéria e luz em arquivos separados, animáveis um sobre o outro.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="who">
+        <h3>Workbench · Sixtyfour · Micro 5</h3>
+        <span class="by">Google Fonts</span>
+        <a href="https://fonts.google.com/specimen/Workbench" target="_blank" rel="noopener">ver e baixar</a>
+      </div>
+      <div class="what">
+        <span class="tag">gratuitas · variáveis</span>
+        <p>Três variáveis construídas sobre grade de módulos, com eixos que mudam o <strong>próprio módulo</strong> — não o peso da letra.</p>
+        <p>Úteis como estudo técnico: mostram como parametrizar uma grade sem quebrar a leitura, que é o problema que o nosso gerador resolve na mão.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="who">
+        <h3>GT Maru · ABC Gravity</h3>
+        <span class="by">Grilli Type · Dinamo</span>
+        <a href="https://grillitype.com/typeface/gt-maru" target="_blank" rel="noopener">grilli type</a>
+      </div>
+      <div class="what">
+        <span class="tag">licença paga</span>
+        <p>Duas contemporâneas de geometria explícita e larguras extremas. <strong>ABC Gravity</strong> chega a larguras que quebram a caixa da palavra, útil para peças grandes.</p>
+        <p>Nenhuma das duas é modular no sentido do briefing — entram como referência de <em>acabamento contemporâneo</em>, não de construção.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="shead">
+    <h2>3 · Identidades onde a luz preenche a matéria</h2>
+    <span>instituições culturais com marca de contorno fixo e miolo variável</span>
+  </div>
+  <div class="rows">
+
+    <div class="row">
+      <div class="who">
+        <h3>Barbican</h3>
+        <span class="by">Londres · centro de artes brutalista</span>
+        <a href="https://www.barbican.org.uk/" target="_blank" rel="noopener">site</a>
+      </div>
+      <div class="what">
+        <p>O caso mais próximo do Téra em <strong>situação</strong>, não em estética: um edifício de concreto aparente, historicamente pesado, que abriga programação que muda toda semana.</p>
+        <p>A identidade resolve isso deixando a arquitetura ser o registro fixo e a programação ocupar a cor e a imagem. É a mesma divisão de trabalho que vocês nomearam: moldura e preenchimento.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="who">
+        <h3>Serpentine</h3>
+        <span class="by">Londres · identidade por Pentagram</span>
+        <a href="https://www.pentagram.com/work/serpentine-galleries" target="_blank" rel="noopener">estudo de caso</a>
+      </div>
+      <div class="what">
+        <p>Wordmark de construção rígida que serve de <strong>recipiente</strong> para as obras. O sistema não escolhe a imagem: abre lugar para ela.</p>
+        <p>Vale ler o estudo de caso inteiro antes da próxima apresentação — a argumentação deles é o modelo de como se defende um sistema aberto para um conselho.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="who">
+        <h3>Elbphilharmonie</h3>
+        <span class="by">Hamburgo · sala sobre armazém histórico</span>
+        <a href="https://www.elbphilharmonie.de/en/" target="_blank" rel="noopener">site</a>
+      </div>
+      <div class="what">
+        <p>A referência estrutural mais exata que existe para o Téra: uma sala contemporânea <strong>construída em cima de um edifício histórico preservado</strong>, com a costura entre os dois à vista.</p>
+        <p>É o mesmo enredo do Matarazzo. Como eles trataram essa junção na comunicação é matéria direta para o nosso argumento.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="who">
+        <h3>The Shed · MAAT</h3>
+        <span class="by">Nova York · Lisboa</span>
+        <a href="https://theshed.org/" target="_blank" rel="noopener">the shed</a>
+      </div>
+      <div class="what">
+        <p>Duas casas cuja arquitetura <strong>muda de estado</strong> — o Shed literalmente se desloca sobre trilhos. Marca reduzida ao mínimo, exatamente porque o edifício já é o espetáculo.</p>
+        <p>Contraponto útil: mostram o risco de uma marca tão neutra que some. O feedback pede o oposto disso, e vale ter o argumento pronto.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="note">
+    <div>
+      <h4>A descoberta que muda a conversa</h4>
+      <p>Os dois extremos do eixo são do <strong>mesmo designer</strong>. Crouwel fez o New Alphabet em 1967, ilegível de propósito, e o Gridnik em 1974, que resolve grade com um corte a 45° e continua perfeitamente legível.</p>
+      <p>Isso dá à apresentação uma espinha pronta: não é escolher entre modular e legível, é escolher <em>onde</em> no intervalo entre os dois. E há setenta anos de precedente mostrando o caminho.</p>
+    </div>
+    <div>
+      <h4>O que já dá para usar amanhã</h4>
+      <p><strong>Gridnik</strong> é a referência formal mais útil — vale estudar o tratamento de canto dela contra o nosso corte reto atual.</p>
+      <p>De <strong>Bungee</strong> vale roubar a ideia de camadas: matéria e luz como arquivos separados, empilhados e animados independentemente. Isso encaixa direto no sistema que vocês aprovaram.</p>
+    </div>
+    <div>
+      <h4>O que não consegui levantar</h4>
+      <p>O <strong>Behance bloqueou</strong> o acesso automatizado — tanto por requisição direta quanto por navegador, devolveu limite de requisições excedido. Não tenho, portanto, um levantamento de projetos de lá.</p>
+      <p>Os buscadores também estavam degradados durante a pesquisa. Tudo que está nesta página foi <strong>verificado link a link</strong>; nada aqui é resultado de busca não conferida.</p>
+    </div>
+    <div>
+      <h4>Se quiser cobrir o Behance</h4>
+      <p>Dois caminhos: você abre e me manda os links dos projetos que interessarem, e eu analiso um a um; ou eu monto a varredura por outra via, como Fonts In Use e Are.na, que não bloqueiam.</p>
+      <p>A segunda costuma render mais para tipografia — o Behance é forte em peça pronta, fraco em construção.</p>
+    </div>
+  </div>
+
+  <footer class="colophon">
+    <span>Téra · Espetáculos Multidimensionais</span>
+    <span>The Force · 2026</span>
+  </footer>
+</div>
