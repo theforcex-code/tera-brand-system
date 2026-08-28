@@ -10,9 +10,10 @@ Três labs sobre a mesma ideia, do mais simples ao mais bruto:
 
 | | arquivo | motor | matéria |
 |---|---|---|---|
-| **GPU** | `index.html` | WebGPU (compute shader) | 2 a 8 milhões |
+| **GPU** | `index.html` | WebGPU (compute shader) | 2 a 8 milhões de grãos |
 | **WebGL** | `3d.html` | Three.js | ~620 mil grãos |
 | **2D** | `2d.html` | Canvas 2D | ~200 mil grãos |
+| **Taipa** | `taipa.html` | Three.js + shader próprio | parede procedural, ~4 mil triângulos |
 
 O WebGPU é a porta de entrada e as três versões ficam linkadas no topo de todas
 elas. Sem suporte a WebGPU, essa página oferece a versão WebGL, que roda em
@@ -69,6 +70,13 @@ grão nasceu; o vertex shader soma a esse índice o relógio e a camada Z antes 
 ler a LUT. De graça, isso dá três coisas: a paleta rola para sempre (a animação
 nunca acaba), cada camada de profundidade lê a paleta deslocada (o volume deixa
 de ser uma extrusão chapada), e nada disso custa um passo de simulação.
+
+**`taipa-main.js`** — o wordmark como parede de taipa digital: a máscara vira uma
+casca de quads (só as faces visíveis, extraídas em corridas), e TODO o material é
+um shader — altura → estrato, estrato → cor da paleta, grão de agregado, sombra
+de compactação na base de cada leva, costuras de luz entre camadas, uma varredura
+que sobe a parede e um glitch que corrompe uma camada por instante. Nada é
+textura de arquivo.
 
 **`wordmark.js`** resolve as três formas. A do cliente vem de um bitmap, não de
 um vetor — foi o que ele mandou. Isso exigiu corte por luminância (o PNG tem

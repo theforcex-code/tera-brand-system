@@ -31,23 +31,23 @@ export const PARAMS = {
   // ---- física ----
   gravidade: {
     group: 'fisica', label: 'Gravidade', min: 1, max: 12, step: 1, value: 4,
-    unit: ' px', hint: 'Células que um grão desce por passo.',
+    scope: '2d 3d gpu', unit: ' px', hint: 'Células que um grão desce por passo.',
   },
   vento: {
     group: 'fisica', label: 'Vento', min: -1, max: 1, step: 0.01, value: 0,
-    hint: 'Desvia o grão em queda e enviesa o lado para onde ele escorrega.',
+    scope: '2d 3d gpu', hint: 'Desvia o grão em queda e enviesa o lado para onde ele escorrega.',
   },
   rajada: {
     group: 'fisica', label: 'Rajada', min: 0, max: 1, step: 0.01, value: 0,
-    hint: 'Oscilação do vento no tempo (soma de senóides).',
+    scope: '2d 3d gpu', hint: 'Oscilação do vento no tempo (soma de senóides).',
   },
   periodo: {
     group: 'fisica', label: 'Período', min: 1, max: 30, step: 0.5, value: 7,
-    unit: 's', hint: 'Ciclo da rajada.',
+    scope: '2d 3d gpu', unit: 's', hint: 'Ciclo da rajada.',
   },
   talude: {
     group: 'fisica', label: 'Talude', min: 0, max: 1, step: 0.01, value: 0,
-    hint: 'Chance de o grão travar em vez de escorregar. 0 espalha, 1 empilha em coluna.',
+    scope: '2d 3d gpu', hint: 'Chance de o grão travar em vez de escorregar. 0 espalha, 1 empilha em coluna.',
   },
   dispersao: {
     group: 'fisica', label: 'Dispersão', min: 1, max: 4, step: 1, value: 1, scope: '2d',
@@ -58,18 +58,19 @@ export const PARAMS = {
     hint: 'O vento arranca grãos já assentados e a duna migra. Custa caro — deixe em 0 se pesar.',
   },
   turbulencia: {
-    group: 'fisica', label: 'Turbulência', min: 0, max: 0.6, step: 0.01, value: 0.15, scope: 'gpu',
-    hint: 'Cada camada de profundidade ganha uma corrente lateral própria. É o que '
-      + 'faz a matéria do fundo se comportar diferente da matéria da frente.',
+    group: 'fisica', label: 'Turbulência', min: 0, max: 0.6, step: 0.01, value: 0.15, scope: 'gpu taipa',
+    hint: 'Cada camada de profundidade ganha uma corrente lateral própria. '
+      + 'Na taipa, vira a corrupção digital: quantas camadas leem com glitch.',
   },
   camada: {
-    group: 'fisica', label: 'Camada', min: 4, max: 200, step: 2, value: 48, scope: 'gpu',
-    unit: ' px', hint: 'De quantas em quantas camadas a corrente inverte de lado.',
+    group: 'fisica', label: 'Camada', min: 4, max: 200, step: 2, value: 48, scope: 'gpu taipa',
+    unit: ' px', hint: 'De quantas em quantas camadas a corrente inverte de lado. '
+      + 'Na taipa, a altura de cada leva socada.',
   },
   profundidade: {
-    group: 'fisica', label: 'Profundidade', min: 0, max: 40, step: 0.5, value: 12, scope: 'gpu',
-    hint: 'Quanto a cor caminha na paleta a cada camada de profundidade. É o que '
-      + 'faz a areia do fundo não ser igual à da frente.',
+    group: 'fisica', label: 'Profundidade', min: 0, max: 40, step: 0.5, value: 12, scope: 'gpu taipa',
+    hint: 'Quanto a cor caminha na paleta a cada camada de profundidade. '
+      + 'Na taipa, a espessura da parede.',
   },
   direcao: {
     group: 'fisica', label: 'Direção', min: 0, max: 360, step: 5, value: 0, scope: '3d gpu',
@@ -79,7 +80,7 @@ export const PARAMS = {
   // ---- matéria ----
   chuva: {
     group: 'materia', label: 'Vazão', min: 1, max: 100, step: 1, value: 80,
-    unit: '%', hint: 'Quanta areia entra pelas bocas do desenho a cada passo.',
+    scope: '2d 3d gpu', unit: '%', hint: 'Quanta areia entra pelas bocas do desenho a cada passo.',
   },
   jato: {
     group: 'materia', label: 'Jato', min: 1, max: 24, step: 1, value: 0, scope: '2d',
@@ -100,7 +101,7 @@ export const PARAMS = {
     unit: '%', hint: 'Fatia a rocha e mostra os estratos — cada camada é um instante do despejo.',
   },
   orbita: {
-    group: 'camera', label: 'Órbita', min: 0, max: 1, step: 0.05, value: 0.25, scope: '3d gpu',
+    group: 'camera', label: 'Órbita', min: 0, max: 1, step: 0.05, value: 0.25, scope: '3d gpu taipa',
     unit: '×', hint: 'Giro automático da câmera. Arraste para conduzir; role para aproximar.',
   },
 };

@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TÉRA — Lab 02 · Areia GPU</title>
-<meta name="description" content="O wordmark Téra escoa de um plano de terra para o outro e vira rocha: cada camada de areia guarda a cor do instante em que caiu, e o corte revela o tempo gravado.">
+<title>TÉRA — Lab 02 · Areia · Taipa</title>
+<meta name="description" content="O wordmark Téra como taipa digital: uma parede de estratos socados, girando sob luz — cada camada guarda uma cor, costuras de luz correm entre elas.">
 <link rel="icon" href="favicon.png">
 <style>
-/* Lab 02 · Areia 3D. Dois planos de terra: o de cima tem o TÉRA vazado e escoa,
-   o de baixo recebe. A pilha vira rocha — cada estrato é um instante do despejo. */
+/* Lab 02 · Areia · Taipa. A parede de terra socada, digital: o wordmark extrudado
+   em estratos horizontais, girando sob luz. As camadas são a taipa; as costuras
+   de luz e o glitch são o high tech. */
 
 /* dois src: o primeiro é a fonte do projeto, o segundo a cópia que viaja no
    deploy — o navegador cai para a segunda quando a primeira não existe */
@@ -34,14 +35,16 @@
   --grey: #4a4742;
   --biolum: #31C4FF;
   --pad: clamp(14px, 2.2vw, 28px);
-  --bar-h: 44px;                 /* altura real da barra inferior, medida em runtime */
+  --bar-h: 44px;
   --ease-seco: cubic-bezier(0.85, 0, 0.15, 1);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; overflow: hidden; }
 body {
-  background: var(--subsolo);
+  /* o palco: um fundo com respiração, não um preto chapado — a luz da cena
+     parece vir de algum lugar */
+  background: radial-gradient(120% 90% at 50% 32%, #17130e 0%, #0A0908 56%, #050403 100%);
   color: var(--cal);
   font-family: 'Space Mono', ui-monospace, monospace;
   -webkit-font-smoothing: antialiased;
@@ -141,11 +144,20 @@ button:active { transform: translateY(1px); }
 .hint span { color: var(--grey); }
 .hint--off { opacity: 0; }
 
+.erro {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--cal);
+}
+
 /* descritor da marca: o mesmo texto do lockup, largo como o wordmark */
 .descritor {
   position: absolute;
   left: 50%;
-  top: 63%;
+  top: 76%;
   transform: translateX(-50%);
   color: var(--cal);
   font-weight: 700;
@@ -159,18 +171,6 @@ button:active { transform: translateY(1px); }
   transition: opacity 400ms var(--ease-seco);
 }
 .descritor--off { opacity: 0; }
-
-.erro {
-  position: absolute;
-  left: 50%;
-  top: 46%;
-  transform: translate(-50%, -50%);
-  max-width: 60ch;
-  text-align: center;
-  color: #ff6b6b;
-  line-height: 1.7;
-}
-.erro[hidden] { display: none; }
 
 /* ---- painel de ajustes ---- */
 
@@ -272,7 +272,7 @@ button:active { transform: translateY(1px); }
 }
 
 @media (hover: none) {
-  .hint__keys { display: none; }   /* atalhos de teclado não fazem sentido no toque */
+  .hint__keys { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -283,20 +283,20 @@ button:active { transform: translateY(1px); }
 <body>
 
 <main class="lab">
-  <canvas id="areia" aria-label="Wordmark Téra em areia 3D. Arraste para orbitar a rocha."></canvas>
+  <canvas id="areia" aria-label="Wordmark Téra como parede de taipa digital. Arraste para girar."></canvas>
 
   <p class="descritor mono" id="descritor">Espetáculos multidimensionais</p>
 
   <p class="hint mono" id="hint">
-    arraste para girar &nbsp;·&nbsp; role para aproximar &nbsp;·&nbsp; simulação em WebGPU<br>
-    <span>o logo enche e o fluxo não para</span><span class="hint__keys"> &nbsp;/&nbsp; A · ajustes &nbsp;/&nbsp; E · encher &nbsp;/&nbsp; D · descritor</span>
+    arraste para girar &nbsp;·&nbsp; role para aproximar &nbsp;·&nbsp; a parede gira sozinha<br>
+    <span>cada estrato é uma camada socada de cor</span><span class="hint__keys"> &nbsp;/&nbsp; A · ajustes &nbsp;/&nbsp; G · girar &nbsp;/&nbsp; D · descritor</span>
   </p>
 
   <p class="erro mono" id="erro" hidden></p>
 
   <header class="bar bar--top mono">
-    <span class="bar__title"><b>TÉRA</b><i>·</i>Lab 02<i>·</i>Areia</span><span class="versoes"><a href="./" aria-current="page">GPU</a><a href="3d.html">WebGL</a><a href="2d.html">2D</a><a href="taipa.html">Taipa</a></span>
-    <span id="hud" aria-live="off">iniciando WebGPU…</span>
+    <span class="bar__title"><b>TÉRA</b><i>·</i>Lab 02<i>·</i>Areia</span><span class="versoes"><a href="./">GPU</a><a href="3d.html">WebGL</a><a href="2d.html">2D</a><a href="taipa.html" aria-current="page">Taipa</a></span>
+    <span id="hud" aria-live="off">erguendo a parede…</span>
   </header>
 
   <nav class="bar bar--bottom mono" aria-label="Controles">
@@ -311,25 +311,22 @@ button:active { transform: translateY(1px); }
         <button type="button" data-palette="subsolo" aria-pressed="false" title="Estratos de terra (P)">Subsolo</button>
         <button type="button" data-palette="cal" aria-pressed="false" title="Branco Cal (P)">Cal</button>
       </div>
-      <div class="group" role="group" aria-label="Custo">
-        <button type="button" data-perfil="leve" title="Meio milhão de grãos — para máquina modesta">Leve</button>
-        <button type="button" data-perfil="medio" title="2 milhões de grãos — padrão">Médio</button>
-        <button type="button" data-perfil="alto" title="8 milhões — só com GPU sobrando">Alto</button>
-      </div>
       <div class="group">
-        <button type="button" id="rodar" aria-pressed="true" title="Liga e desliga o fluxo perpétuo">Fluxo</button>
-        <button type="button" id="pausa" aria-pressed="false" title="Pausa / segue (espaço)">Pausa</button>
-        <button type="button" id="limpar" title="Recomeça do zero (C)">Recomeçar</button>
+        <button type="button" id="girar" aria-pressed="true" title="Giro automático da parede (G)">Girar</button>
+        <button type="button" id="pausa" aria-pressed="false" title="Congela o relógio da matéria (espaço)">Pausa</button>
       </div>
       <div class="group">
         <button type="button" id="png" title="Salvar imagem (S)">PNG</button>
-        <button type="button" id="descritor-btn" aria-pressed="true" title="Mostra ou esconde o descritor (D)">Descritor</button>
-        <button type="button" id="ajustes" aria-pressed="false" title="Física, tempo e matéria (A)">Ajustes</button>
+        <button type="button" id="descritor-btn" aria-pressed="true" title="Mostra ou esconde o descritor da marca (D)">Descritor</button>
+        <button type="button" id="ajustes" aria-pressed="false" title="Estratos, luz e tempo (A)">Ajustes</button>
       </div>
     </div>
   </nav>
 </main>
 
-<script type="module" src="gpu-main.js?v=32"></script>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+<script type="module" src="taipa-main.js?v=32"></script>
 </body>
 </html>
