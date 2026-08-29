@@ -1,12 +1,21 @@
 /* Sala · posters — as artes.
-   Cada arte desenha num canvas ÚNICO que desdobra a caixa: a tela de fundo
-   embaixo (15,36 × 8,16) e o teto-tela em cima (15,36 × 10,08), dobrados na
-   aresta em que se encontram. 1 px = 1 cm. O que cruza a dobra continua no
-   espaço — é o desenho de mapping, não um layout de post.
+   A sala é imersiva: TRÊS paredes de tela (esquerda, fundo, direita) e o
+   teto-tela. Cada arte desenha num canvas ÚNICO que desdobra a caixa em
+   cruz — o anel de paredes aberto na horizontal e o teto dobrado pra cima
+   da coluna central:
+
+                       ┌──────────┐
+                       │   TETO   │  1536 × 1008
+            ┌──────────┼──────────┼──────────┐
+            │ ESQUERDA │  FUNDO   │ DIREITA  │  3 × (1536 × 816)
+            └──────────┴──────────┴──────────┘
+            0        1536       3072       4608      (1 px = 1 cm)
+
+   O que cruza uma dobra continua na superfície vizinha: uma linha na
+   horizontal circunda a sala; o que sobe do fundo derrama no teto.
 
    Régua da marca (TERA_BRAND.md): preto #0A0A0C, papel #F4F4F1, fósforo
-   #2CF5A0; TÉRA em Archivo Black (Expanded pra statements, Condensed pras
-   frestas verticais); o acento do É é a própria fresta horizontal em
+   #2CF5A0; TÉRA em Archivo Black; o acento do É é a própria fresta em
    fósforo; camada técnica em Space Mono. */
 
 export const CORES = {
@@ -15,8 +24,20 @@ export const CORES = {
   fosforo: '#2CF5A0',
 };
 
-/* o desdobrado: teto em cima (y 0..1008), dobra em y=1008, tela embaixo */
-export const UNFOLD = { W: 1536, TETO: 1008, TELA: 816, H: 1824, FOLD: 1008 };
+export const UNFOLD = {
+  FACE: 1536,  // largura de cada parede (15,36 m)
+  TELA: 816,   // altura do anel de telas (8,16 m)
+  TETO: 1008,  // avanço do teto-tela (10,08 m)
+  WT: 4608,    // o anel inteiro: esquerda + fundo + direita
+  H: 1824,     // teto em cima (1008) + anel embaixo (816)
+  FOLD: 1008,  // a linha onde o anel encontra o teto
+  X0: 1536,    // onde começa o fundo
+  X1: 3072,    // onde termina o fundo
+};
+
+const { FACE, TELA, TETO, WT, H, FOLD, X0, X1 } = UNFOLD;
+const CX = X0 + FACE / 2; // centro do fundo — o olhar da câmera frontal
+const Y_TELA = (f) => FOLD + TELA * f;
 
 const EXP = (px) => `900 ${px}px 'Archivo Exp', sans-serif`;
 const COND = (px) => `900 ${px}px 'Archivo Cond', sans-serif`;
@@ -118,15 +139,12 @@ function corpoQueCabe(ctx, texto, larguraMax, px, fonte) {
 
 /* ---------------------------------------------------------------- artes */
 
-const { W, H, FOLD, TELA } = UNFOLD;
-const CX = W / 2;
-const Y_TELA = (f) => FOLD + TELA * f; // fração da tela → y do desdobrado
-
-/* FRESTA — o void e a menor unidade de luz. A frase atravessa a fresta e
-   muda de cor dentro dela; a luz vaza pela dobra e escorre pelo teto. */
+/* FRESTA — a menor unidade de luz circunda a sala inteira: uma linha de
+   fósforo pelas três paredes. A frase atravessa a fresta no fundo e muda
+   de cor dentro dela; a luz vaza pela dobra e escorre pelo teto. */
 function fresta(ctx, o) {
   ctx.fillStyle = CORES.preto;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, WT, H);
 
   const yF = Y_TELA(0.52), hF = 30;
 
@@ -135,41 +153,39 @@ function fresta(ctx, o) {
   veu.addColorStop(0, 'rgba(44,245,160,0.16)');
   veu.addColorStop(1, 'rgba(44,245,160,0)');
   ctx.fillStyle = veu;
-  ctx.fillRect(0, 0, W, FOLD);
+  ctx.fillRect(0, 0, WT, FOLD);
 
-  // a fresta, com halo
+  // a fresta dá a volta: esquerda → fundo → direita, sem emenda
   ctx.save();
   ctx.shadowColor = CORES.fosforo;
   ctx.shadowBlur = 90;
   ctx.fillStyle = CORES.fosforo;
-  ctx.fillRect(-60, yF - hF / 2, W + 120, hF);
+  ctx.fillRect(-60, yF - hF / 2, WT + 120, hF);
   ctx.restore();
 
-  // a frase cruza: papel fora da fresta, preto dentro dela
+  // a frase cruza no fundo: papel fora da fresta, preto dentro dela
   const frase = (o.frase || 'A TÉRA ABRE').toUpperCase();
-  const px = corpoQueCabe(ctx, frase, W * 0.88, 190, EXP);
+  const px = corpoQueCabe(ctx, frase, FACE * 0.88, 190, EXP);
   const yBase = yF + px * 0.36;
   linhaComTera(ctx, frase, CX, yBase, px, CORES.papel, CORES.fosforo);
   ctx.save();
   ctx.beginPath();
-  ctx.rect(0, yF - hF / 2, W, hF);
+  ctx.rect(0, yF - hF / 2, WT, hF);
   ctx.clip();
   linhaComTera(ctx, frase, CX, yBase, px, CORES.preto, CORES.preto);
   ctx.restore();
-
 }
 
-/* ESTADO — o número da vez em frestas verticais Condensed, fósforo. */
+/* ESTADO — o número no fundo; a persiana de frestas verticais fatia as
+   três paredes e as colunas de luz sobem pelo teto. */
 function estado(ctx, o) {
   ctx.fillStyle = CORES.preto;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, WT, H);
 
   const num = String(o.estado || '001');
-  const px = 900;
-  ctx.font = COND(px);
+  ctx.font = COND(900);
   const yBase = Y_TELA(0.78);
 
-  // o número, aceso
   ctx.save();
   ctx.shadowColor = CORES.fosforo;
   ctx.shadowBlur = 60;
@@ -179,17 +195,25 @@ function estado(ctx, o) {
   ctx.fillText(num, CX, yBase);
   ctx.restore();
 
-  // persiana: colunas pretas finas fatiam os dígitos em frestas verticais
+  // ecos do número nas paredes laterais, mais fracos — a sala repete
+  ctx.save();
+  ctx.globalAlpha = 0.34;
+  ctx.fillStyle = CORES.fosforo;
+  ctx.fillText(num, X0 / 2, yBase);
+  ctx.fillText(num, X1 + FACE / 2, yBase);
+  ctx.restore();
+
+  // persiana: colunas pretas finas fatiam o anel inteiro
   ctx.fillStyle = CORES.preto;
   const passo = 62;
-  for (let x = CX - W / 2; x < CX + W / 2; x += passo) ctx.fillRect(x, 0, 10, H);
+  for (let x = 0; x < WT; x += passo) ctx.fillRect(x, 0, 10, H);
 
   // as colunas continuam teto adentro como linhas de luz que se apagam
   const gradTeto = ctx.createLinearGradient(0, FOLD, 0, FOLD - 620);
   gradTeto.addColorStop(0, 'rgba(44,245,160,0.34)');
   gradTeto.addColorStop(1, 'rgba(44,245,160,0)');
   ctx.fillStyle = gradTeto;
-  for (let x = 26; x < W; x += passo) ctx.fillRect(x, FOLD - 620, 4, 620);
+  for (let x = X0 + 26; x < X1; x += passo) ctx.fillRect(x, FOLD - 620, 4, 620);
 
   ctx.fillStyle = CORES.papel;
   ctx.font = MONO(34, 700);
@@ -197,20 +221,19 @@ function estado(ctx, o) {
   ctx.fillText(`ESTADO ${num}`, CX, Y_TELA(0.92));
 }
 
-/* STATEMENT — a caixa aberta: papel total, o bloco preto fala. */
+/* STATEMENT — a caixa aberta: papel nas três paredes, o bloco preto fala
+   no fundo e o Plano fechado paira no teto. */
 function statement(ctx, o) {
   ctx.fillStyle = CORES.papel;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, WT, H);
 
-  // no teto, o Plano fechado: um void preto na proporção da tela
-  const pw = W * 0.62, ph = pw * (8.16 / 15.36) * 0.5;
+  const pw = FACE * 0.62, ph = pw * (8.16 / 15.36) * 0.5;
   ctx.fillStyle = CORES.preto;
   ctx.fillRect(CX - pw / 2, FOLD - 260 - ph, pw, ph);
 
   const frase = (o.frase || 'A TÉRA ABRE').toUpperCase();
   const palavras = frase.split(' ');
   const linhas = [];
-  // quebra equilibrada: 2 linhas até 4 palavras, 3 daí em diante
   if (palavras.length <= 2) linhas.push(...palavras);
   else {
     const alvo = Math.ceil(palavras.length / (palavras.length <= 4 ? 2 : 3));
@@ -220,39 +243,53 @@ function statement(ctx, o) {
 
   let y = Y_TELA(0.30);
   for (const linha of linhas) {
-    const px = corpoQueCabe(ctx, linha, W * 0.9, 235, EXP);
+    const px = corpoQueCabe(ctx, linha, FACE * 0.9, 235, EXP);
     y += px * 0.94;
     linhaComTera(ctx, linha, CX, y, px, CORES.preto, CORES.fosforo);
   }
 
+  // nas laterais, a frase corre na vertical como matéria gráfica
+  ctx.save();
+  ctx.fillStyle = 'rgba(10,10,12,0.16)';
+  ctx.font = EXP(360);
+  ctx.textAlign = 'center';
+  for (const [cx, giro] of [[X0 / 2, -Math.PI / 2], [X1 + FACE / 2, Math.PI / 2]]) {
+    ctx.save();
+    ctx.translate(cx, Y_TELA(0.5));
+    ctx.rotate(giro);
+    ctx.fillText(frase, 0, 120);
+    ctx.restore();
+  }
+  ctx.restore();
 }
 
-/* PLANO — a caixa abrindo: a faixa de papel rasga o preto e o nome está lá. */
+/* PLANO — a caixa abrindo em volta inteira: a faixa de papel rasga as
+   três paredes e o nome está no fundo. */
 function plano(ctx, o) {
   ctx.fillStyle = CORES.preto;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, WT, H);
 
-  // hairlines marcam o retângulo do Plano fechado (tela toda) e o eco no teto
+  // hairlines marcam o Plano fechado em cada superfície
   ctx.strokeStyle = 'rgba(244,244,241,0.28)';
   ctx.lineWidth = 3;
-  ctx.strokeRect(40, FOLD + 40, W - 80, TELA - 80);
-  ctx.strokeRect(40, 60, W - 80, FOLD - 120);
+  for (const x of [0, X0, X1]) ctx.strokeRect(x + 40, FOLD + 40, FACE - 80, TELA - 80);
+  ctx.strokeRect(X0 + 40, 60, FACE - 80, FOLD - 120);
 
-  // a abertura: papel entrando pela fresta central
+  // a abertura circunda a sala: papel entrando pela fresta nas três paredes
   const hA = TELA * 0.40;
   const yA = Y_TELA(0.5) - hA / 2;
   ctx.fillStyle = CORES.papel;
-  ctx.fillRect(0, yA, W, hA);
+  ctx.fillRect(0, yA, WT, hA);
 
-  // dentro da abertura, o logo escolhido
-  logoNoCanvas(ctx, o, CX, yA + hA / 2, W * 0.58, CORES.preto, CORES.fosforo, hA * 0.72);
+  // dentro da abertura, no fundo, o logo escolhido
+  logoNoCanvas(ctx, o, CX, yA + hA / 2, FACE * 0.58, CORES.preto, CORES.fosforo, hA * 0.72);
 
   // a luz da abertura vaza pro teto
   const veu = ctx.createLinearGradient(0, FOLD, 0, 200);
   veu.addColorStop(0, 'rgba(244,244,241,0.10)');
   veu.addColorStop(1, 'rgba(244,244,241,0)');
   ctx.fillStyle = veu;
-  ctx.fillRect(0, 200, W, FOLD - 200);
+  ctx.fillRect(0, 200, WT, FOLD - 200);
 
   ctx.fillStyle = CORES.papel;
   ctx.font = MONO(30);
@@ -260,68 +297,81 @@ function plano(ctx, o) {
   ctx.fillText((o.frase || 'A TÉRA ABRE').toUpperCase(), CX, Y_TELA(0.93));
 }
 
-/* TÉCNICA — a sala falando de si: grade do módulo 0,48 e as medidas. */
+/* TÉCNICA — a sala falando de si: grade do módulo 0,48 no anel inteiro,
+   as quinas marcadas, cada superfície com a própria medida. */
 function tecnica(ctx, o) {
   ctx.fillStyle = CORES.preto;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, WT, H);
 
   const passo = 48; // 0,48 m
-  for (let x = 0; x <= W; x += passo) {
+  for (let x = 0; x <= WT; x += passo) {
     ctx.fillStyle = (x / passo) % 8 === 0 ? 'rgba(44,245,160,0.20)' : 'rgba(44,245,160,0.07)';
     ctx.fillRect(x, 0, 2, H);
   }
   for (let y = H; y >= 0; y -= passo) {
     ctx.fillStyle = ((H - y) / passo) % 8 === 0 ? 'rgba(44,245,160,0.20)' : 'rgba(44,245,160,0.07)';
-    ctx.fillRect(0, y - 1, W, 2);
+    ctx.fillRect(0, y - 1, WT, 2);
   }
-  // a dobra é uma linha viva
+  // a linha do topo do anel (e a dobra do teto) é viva; as quinas também
   ctx.fillStyle = 'rgba(44,245,160,0.55)';
-  ctx.fillRect(0, FOLD - 2, W, 4);
+  ctx.fillRect(0, FOLD - 2, WT, 4);
+  ctx.fillRect(X0 - 2, FOLD, 4, TELA);
+  ctx.fillRect(X1 - 2, FOLD, 4, TELA);
 
   ctx.textAlign = 'left';
-  ctx.fillStyle = CORES.papel;
-  ctx.font = MONO(44, 700);
-  ctx.fillText('TELA DE FUNDO 15,36 × 8,16 M — 125,3 M²', 72, Y_TELA(0.14));
-  ctx.fillText('TETO-TELA 15,36 × 10,08 M — 154,8 M²', 72, FOLD - 80);
+  const etiqueta = (texto, x, y, corpo = 44) => {
+    ctx.fillStyle = CORES.papel;
+    ctx.font = MONO(corpo, 700);
+    ctx.fillText(texto, x, y);
+  };
+  etiqueta('PAREDE ESQ 15,36 × 8,16 M — 125,3 M²', 72, Y_TELA(0.14));
+  etiqueta('TELA DE FUNDO 15,36 × 8,16 M — 125,3 M²', X0 + 72, Y_TELA(0.14));
+  etiqueta('PAREDE DIR 15,36 × 8,16 M — 125,3 M²', X1 + 72, Y_TELA(0.14));
+  etiqueta('TETO-TELA 15,36 × 10,08 M — 154,8 M²', X0 + 72, FOLD - 80);
+
   ctx.font = MONO(30);
   ctx.fillStyle = 'rgba(244,244,241,0.55)';
-  ctx.fillText('MÓDULO 0,48 M — 32 × 17 + 32 × 21', 72, Y_TELA(0.14) + 52);
-  ctx.fillText('MATA SÃO PAULO — COMPLEXO MATARAZZO', 72, Y_TELA(0.14) + 96);
+  ctx.fillText('MÓDULO 0,48 M — LUZ TOTAL 530,9 M²', X0 + 72, Y_TELA(0.14) + 52);
+  ctx.fillText('MATA SÃO PAULO — COMPLEXO MATARAZZO', X0 + 72, Y_TELA(0.14) + 96);
 
-  logoNoCanvas(ctx, o, W - 72 - W * 0.20, Y_TELA(0.80), W * 0.40, CORES.papel, CORES.fosforo, TELA * 0.30);
+  logoNoCanvas(ctx, o, X1 - 72 - FACE * 0.20, Y_TELA(0.80), FACE * 0.40, CORES.papel, CORES.fosforo, TELA * 0.30);
 }
 
 /* MARCA — o logo é o mapping: a marca em escala de sala, posicionada pelo
    modo de mapeamento escolhido. */
 function marca(ctx, o) {
   ctx.fillStyle = CORES.preto;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, WT, H);
 
   const modo = o.mapear || 'cobrir';
   if (modo === 'mosaico') {
-    const wTile = W / 5;
+    const wTile = FACE / 5;
     const hTile = wTile / (o.logoImg ? (o.logoAspecto || 2) : 2.9);
     const passoY = hTile * 1.9;
     let fila = 0;
     for (let y = hTile; y < H + hTile; y += passoY, fila++) {
-      for (let x = wTile * 0.6 + (fila % 2 ? wTile * 0.55 : 0); x < W; x += wTile * 1.1) {
+      for (let x = wTile * 0.6 + (fila % 2 ? wTile * 0.55 : 0); x < WT; x += wTile * 1.1) {
         logoNoCanvas(ctx, o, x, y, wTile, CORES.papel, CORES.fosforo);
       }
     }
   } else if (modo === 'dupla') {
-    logoNoCanvas(ctx, o, CX, Y_TELA(0.46), W * 0.7, CORES.papel, CORES.fosforo, TELA * 0.7);
-    logoNoCanvas(ctx, o, CX, FOLD * 0.5, W * 0.7, CORES.papel, CORES.fosforo, FOLD * 0.62);
+    logoNoCanvas(ctx, o, CX, Y_TELA(0.46), FACE * 0.7, CORES.papel, CORES.fosforo, TELA * 0.7);
+    logoNoCanvas(ctx, o, CX, FOLD * 0.5, FACE * 0.7, CORES.papel, CORES.fosforo, FOLD * 0.62);
+  } else if (modo === 'panorama') {
+    // um logo por parede: a marca circunda quem está dentro
+    for (const cx of [X0 / 2, CX, X1 + FACE / 2])
+      logoNoCanvas(ctx, o, cx, Y_TELA(0.48), FACE * 0.78, CORES.papel, CORES.fosforo, TELA * 0.76);
   } else if (modo === 'conter' || modo === 'sotela') {
-    logoNoCanvas(ctx, o, CX, Y_TELA(0.48), W * 0.82, CORES.papel, CORES.fosforo, TELA * 0.8);
-  } else { // cobrir e esticar: a marca cruza a dobra
-    logoNoCanvas(ctx, o, CX, FOLD, W * 0.94, CORES.papel, CORES.fosforo);
+    logoNoCanvas(ctx, o, CX, Y_TELA(0.48), FACE * 0.82, CORES.papel, CORES.fosforo, TELA * 0.8);
+  } else { // cobrir e esticar: a marca cruza a dobra do teto
+    logoNoCanvas(ctx, o, CX, FOLD, FACE * 0.94, CORES.papel, CORES.fosforo);
   }
 }
 
 /* IMAGEM — o que você subiu, mapeado no desdobrado pelo modo escolhido. */
 function imagem(ctx, o) {
   ctx.fillStyle = CORES.preto;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, WT, H);
   const img = o.imagem;
   if (!img) return;
 
@@ -334,46 +384,67 @@ function imagem(ctx, o) {
     ctx.restore();
   };
 
+  const corMedia = () => {
+    if (!img.__media) {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = 1;
+      const c = cv.getContext('2d');
+      c.drawImage(img, 0, 0, 1, 1);
+      img.__media = c.getImageData(0, 0, 1, 1).data;
+    }
+    return img.__media;
+  };
+
+  const ecoTeto = () => {
+    const [r, g, b] = corMedia();
+    const veu = ctx.createLinearGradient(0, FOLD, 0, 0);
+    veu.addColorStop(0, `rgba(${r},${g},${b},0.30)`);
+    veu.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = veu;
+    ctx.fillRect(0, 0, WT, FOLD);
+  };
+
   switch (o.mapear || 'cobrir') {
     case 'conter': {
-      const s = Math.min(W / img.width, H / img.height);
+      const s = Math.min(WT / img.width, H / img.height);
       const w = img.width * s, h = img.height * s;
-      ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+      ctx.drawImage(img, (WT - w) / 2, (H - h) / 2, w, h);
       break;
     }
     case 'esticar':
-      ctx.drawImage(img, 0, 0, W, H);
+      ctx.drawImage(img, 0, 0, WT, H);
       break;
     case 'mosaico': {
-      const w = W / 4, h = (img.height / img.width) * w;
+      const w = FACE / 3, h = (img.height / img.width) * w;
       for (let y = 0; y < H; y += h)
-        for (let x = 0; x < W; x += w) ctx.drawImage(img, x, y, w, h);
+        for (let x = 0; x < WT; x += w) ctx.drawImage(img, x, y, w, h);
       break;
     }
     case 'sotela': {
-      cobre(0, FOLD, W, TELA);
-      // no teto, só o eco: a cor média da imagem vazando pela dobra
-      if (!img.__media) {
-        const cv = document.createElement('canvas');
-        cv.width = cv.height = 1;
-        const c = cv.getContext('2d');
-        c.drawImage(img, 0, 0, 1, 1);
-        img.__media = c.getImageData(0, 0, 1, 1).data;
+      // só a tela clássica do fundo; paredes e teto ficam com o eco
+      cobre(X0, FOLD, FACE, TELA);
+      const [r, g, b] = corMedia();
+      for (const [x0, x1] of [[X0, 0], [X1, WT]]) {
+        const veu = ctx.createLinearGradient(x0, 0, x1, 0);
+        veu.addColorStop(0, `rgba(${r},${g},${b},0.26)`);
+        veu.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = veu;
+        ctx.fillRect(Math.min(x0, x1), FOLD, FACE, TELA);
       }
-      const [r, g, b] = img.__media;
-      const veu = ctx.createLinearGradient(0, FOLD, 0, 0);
-      veu.addColorStop(0, `rgba(${r},${g},${b},0.30)`);
-      veu.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = veu;
-      ctx.fillRect(0, 0, W, FOLD);
+      ecoTeto();
       break;
     }
+    case 'panorama':
+      // a imagem envelopa o anel de paredes; o teto recebe o eco
+      cobre(0, FOLD, WT, TELA);
+      ecoTeto();
+      break;
     case 'dupla':
-      cobre(0, FOLD, W, TELA);
-      cobre(0, 0, W, UNFOLD.TETO);
+      cobre(X0, FOLD, FACE, TELA);
+      cobre(X0, 0, FACE, TETO);
       break;
     default:
-      cobre(0, 0, W, H);
+      cobre(0, 0, WT, H);
   }
 }
 
@@ -392,6 +463,7 @@ export const USA_MAPEAR = new Set(['marca', 'imagem']);
 
 export const MAPEAMENTOS = {
   cobrir: 'COBRIR',
+  panorama: 'PANORAMA',
   conter: 'CONTER',
   esticar: 'ESTICAR',
   mosaico: 'MOSAICO',

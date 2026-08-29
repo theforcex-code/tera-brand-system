@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 import {
   ARTES, CORES, UNFOLD, desenhaTera, MAPEAMENTOS, USA_MAPEAR,
-} from './poster-artes.js?v=3';
+} from './poster-artes.js?v=4';
 
 /* o repertório de logos (brand/logo): monolines tingíveis + o matéria, que
    é plasma e vai como é. FRESTA é o procedural — TERA bold com o acento
@@ -52,7 +52,36 @@ const FORMATOS = {
   '16x9': { label: '16:9', w: 1920, h: 1080 },
 };
 
-const PERIODO = 8000; // ms de um loop de câmera — o REC grava exatamente um
+const PERIODO_BASE = 8000; // ms de um loop em 1× — o REC grava exatamente um
+
+/* o jeito de andar da câmera: modelos de easing pra escolher no painel */
+const EASINGS = {
+  elastico: {
+    label: 'ELÁSTICO',
+    fn: (t) => { // back in-out: passa do ponto e assenta — o elástico
+      const c = 1.70158 * 1.525;
+      return t < 0.5
+        ? (Math.pow(2 * t, 2) * ((c + 1) * 2 * t - c)) / 2
+        : (Math.pow(2 * t - 2, 2) * ((c + 1) * (2 * t - 2) + c) + 2) / 2;
+    },
+  },
+  seco: {
+    label: 'SECO',
+    fn: (t) => (t === 0 ? 0 : t === 1 ? 1 : t < 0.5 // expo: o easing da marca
+      ? Math.pow(2, 20 * t - 10) / 2
+      : (2 - Math.pow(2, -20 * t + 10)) / 2),
+  },
+  fluido: {
+    label: 'FLUIDO',
+    fn: (t) => 0.5 - 0.5 * Math.cos(Math.PI * t), // seno: o vai-e-vem calmo
+  },
+};
+
+const VELOCIDADES = {
+  lenta: { label: '½×', fator: 0.5 },
+  normal: { label: '1×', fator: 1 },
+  rapida: { label: '2×', fator: 2 },
+};
 
 /* ---------------------------------------------------------------- estado */
 
@@ -64,6 +93,8 @@ const estado = {
   fmt: FORMATOS[url.get('fmt')] ? url.get('fmt') : '4x5',
   logo: LOGOS[url.get('logo')] ? url.get('logo') : 'fresta',
   mapear: MAPEAMENTOS[url.get('mapear')] ? url.get('mapear') : 'cobrir',
+  motion: EASINGS[url.get('motion')] ? url.get('motion') : 'elastico',
+  vel: VELOCIDADES[url.get('vel')] ? url.get('vel') : 'normal',
   estado: (url.get('estado') || '001').slice(0, 3),
   frase: url.get('frase') || 'A TÉRA ABRE',
   textos: {
@@ -83,6 +114,7 @@ function gravaUrl() {
   const p = new URLSearchParams({
     arte: estado.arte, cam: estado.cam, fmt: estado.fmt,
     logo: estado.logo, mapear: estado.mapear,
+    motion: estado.motion, vel: estado.vel,
     estado: estado.estado, frase: estado.frase,
     se: estado.textos.supEsq, sd: estado.textos.supDir,
     ie: estado.textos.infEsq, id: estado.textos.infDir,
@@ -131,13 +163,18 @@ const pDir = planoCaixa(M.profundidade, M.peDireito, 0x121215);
 pDir.rotation.y = -Math.PI / 2;
 pDir.position.set(HX, M.peDireito / 2, 0);
 
-/* as superfícies de projeção */
-const telaCanvas = document.createElement('canvas');
-telaCanvas.width = UNFOLD.W; telaCanvas.height = UNFOLD.TELA;
-const tetoCanvas = document.createElement('canvas');
-tetoCanvas.width = UNFOLD.W; tetoCanvas.height = UNFOLD.TETO;
-const reflCanvas = document.createElement('canvas');
-reflCanvas.width = UNFOLD.W; reflCanvas.height = UNFOLD.TELA;
+/* as superfícies de projeção: o anel de três paredes + o teto.
+   Cada uma é uma fatia do canvas desdobrado das artes. */
+function canvasDe(w, h) {
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  return cv;
+}
+const { FACE, TELA: H_TELA, TETO: H_TETO } = UNFOLD;
+const fundoCanvas = canvasDe(FACE, H_TELA);
+const esqCanvas = canvasDe(FACE, H_TELA);
+const dirCanvas = canvasDe(FACE, H_TELA);
+const tetoCanvas = canvasDe(FACE, H_TETO);
 
 function texturaDe(cv) {
   const t = new THREE.CanvasTexture(cv);
@@ -145,16 +182,33 @@ function texturaDe(cv) {
   t.anisotropy = 8;
   return t;
 }
-const telaTex = texturaDe(telaCanvas);
+const fundoTex = texturaDe(fundoCanvas);
+const esqTex = texturaDe(esqCanvas);
+const dirTex = texturaDe(dirCanvas);
 const tetoTex = texturaDe(tetoCanvas);
-const reflTex = texturaDe(reflCanvas);
 
 const tela = new THREE.Mesh(
   new THREE.PlaneGeometry(M.largura, M.telaAltura),
-  new THREE.MeshBasicMaterial({ map: telaTex })
+  new THREE.MeshBasicMaterial({ map: fundoTex })
 );
 tela.position.set(0, M.telaAltura / 2, -HZ + 0.06);
 scene.add(tela);
+
+const ledEsq = new THREE.Mesh(
+  new THREE.PlaneGeometry(M.profundidade, M.telaAltura),
+  new THREE.MeshBasicMaterial({ map: esqTex })
+);
+ledEsq.rotation.y = Math.PI / 2; // u=0 na boca, u=1 na dobra do fundo
+ledEsq.position.set(-HX + 0.06, M.telaAltura / 2, 0);
+scene.add(ledEsq);
+
+const ledDir = new THREE.Mesh(
+  new THREE.PlaneGeometry(M.profundidade, M.telaAltura),
+  new THREE.MeshBasicMaterial({ map: dirTex })
+);
+ledDir.rotation.y = -Math.PI / 2; // u=0 na dobra do fundo, u=1 na boca
+ledDir.position.set(HX - 0.06, M.telaAltura / 2, 0);
+scene.add(ledDir);
 
 const teto = new THREE.Mesh(
   new THREE.PlaneGeometry(M.largura, M.tetoAvanco),
@@ -164,10 +218,11 @@ teto.rotation.x = Math.PI / 2;
 teto.position.set(0, M.telaAltura, -HZ + M.tetoAvanco / 2);
 scene.add(teto);
 
-/* o reflexo da tela no piso — o truque que faz a sala parecer acesa */
+/* os reflexos no piso — o truque que faz a sala parecer acesa. Um por
+   parede, cada um deitado a partir da própria base, com a imagem
+   espelhada e um alpha que morre longe da parede. */
 const alphaRefl = (() => {
-  const cv = document.createElement('canvas');
-  cv.width = 4; cv.height = 256;
+  const cv = canvasDe(4, 256);
   const c = cv.getContext('2d');
   const g = c.createLinearGradient(0, 0, 0, 256);
   g.addColorStop(0, '#5a5a5a'); // junto à parede
@@ -176,16 +231,26 @@ const alphaRefl = (() => {
   c.fillRect(0, 0, 4, 256);
   return new THREE.CanvasTexture(cv);
 })();
-const reflexo = new THREE.Mesh(
-  new THREE.PlaneGeometry(M.largura, M.telaAltura),
-  new THREE.MeshBasicMaterial({
-    map: reflTex, alphaMap: alphaRefl,
-    transparent: true, opacity: 0.34, depthWrite: false,
-  })
-);
-reflexo.rotation.x = -Math.PI / 2;
-reflexo.position.set(0, 0.015, -HZ + M.telaAltura / 2);
-scene.add(reflexo);
+
+const reflexos = []; // { canvas, fonte } — redesenhados a cada arte
+function reflexoDe(fonteCanvas, largura, rotZ, pos, y) {
+  const cv = canvasDe(fonteCanvas.width, fonteCanvas.height);
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(largura, M.telaAltura),
+    new THREE.MeshBasicMaterial({
+      map: texturaDe(cv), alphaMap: alphaRefl,
+      transparent: true, opacity: 0.32, depthWrite: false,
+    })
+  );
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.rotation.z = rotZ;
+  mesh.position.set(pos.x, y, pos.z);
+  scene.add(mesh);
+  reflexos.push({ canvas: cv, fonte: fonteCanvas, tex: mesh.material.map });
+}
+reflexoDe(fundoCanvas, M.largura, 0, { x: 0, z: -HZ + M.telaAltura / 2 }, 0.015);
+reflexoDe(esqCanvas, M.profundidade, Math.PI / 2, { x: -HX + M.telaAltura / 2, z: 0 }, 0.013);
+reflexoDe(dirCanvas, M.profundidade, -Math.PI / 2, { x: HX - M.telaAltura / 2, z: 0 }, 0.014);
 
 /* a silhueta de 1,80 m — figura de escala em contraluz */
 const pessoa = new THREE.Group();
@@ -214,7 +279,7 @@ scene.add(pessoa);
 
 function redesenhaArte() {
   const unfold = document.createElement('canvas');
-  unfold.width = UNFOLD.W; unfold.height = UNFOLD.H;
+  unfold.width = UNFOLD.WT; unfold.height = UNFOLD.H;
   const ctx = unfold.getContext('2d');
   ARTES[estado.arte].draw(ctx, {
     frase: estado.frase, estado: estado.estado, imagem: estado.imagem,
@@ -224,19 +289,26 @@ function redesenhaArte() {
     logoTinta: !LOGOS[estado.logo].semTinta,
   });
 
-  telaCanvas.getContext('2d')
-    .drawImage(unfold, 0, UNFOLD.FOLD, UNFOLD.W, UNFOLD.TELA, 0, 0, UNFOLD.W, UNFOLD.TELA);
-  tetoCanvas.getContext('2d')
-    .drawImage(unfold, 0, 0, UNFOLD.W, UNFOLD.TETO, 0, 0, UNFOLD.W, UNFOLD.TETO);
+  // fatia o desdobrado nas quatro superfícies
+  const fatia = (cv, sx, sy) => cv.getContext('2d')
+    .drawImage(unfold, sx, sy, cv.width, cv.height, 0, 0, cv.width, cv.height);
+  fatia(esqCanvas, 0, UNFOLD.FOLD);
+  fatia(fundoCanvas, UNFOLD.X0, UNFOLD.FOLD);
+  fatia(dirCanvas, UNFOLD.X1, UNFOLD.FOLD);
+  fatia(tetoCanvas, UNFOLD.X0, 0);
+  fundoTex.needsUpdate = esqTex.needsUpdate = dirTex.needsUpdate = tetoTex.needsUpdate = true;
 
-  const cr = reflCanvas.getContext('2d');
-  cr.save();
-  cr.filter = 'blur(7px)'; // piso não é espelho: o reflexo chega difuso
-  cr.scale(1, -1);
-  cr.drawImage(telaCanvas, 0, -UNFOLD.TELA);
-  cr.restore();
-
-  telaTex.needsUpdate = tetoTex.needsUpdate = reflTex.needsUpdate = true;
+  // cada parede espelha no piso, difusa
+  for (const r of reflexos) {
+    const c = r.canvas.getContext('2d');
+    c.save();
+    c.clearRect(0, 0, r.canvas.width, r.canvas.height);
+    c.filter = 'blur(7px)';
+    c.scale(1, -1);
+    c.drawImage(r.fonte, 0, -r.canvas.height);
+    c.restore();
+    r.tex.needsUpdate = true;
+  }
 
   const luz = new THREE.Color(ARTES[estado.arte].luz);
   banhoTela.color.copy(luz);
@@ -291,9 +363,15 @@ const CAMERAS = {
 
 const alvoCam = new THREE.Vector3();
 
+/* um período no fator de velocidade atual */
+const periodoAtual = () => PERIODO_BASE / VELOCIDADES[estado.vel].fator;
+
 function posicionaCamera(t01) {
   const preset = CAMERAS[estado.cam];
-  const p = 0.5 - 0.5 * Math.cos(t01 * Math.PI * 2); // 0→1→0, sem emenda
+  // triângulo 0→1→0 easado pelo modelo escolhido: começa e termina no
+  // mesmo lugar, então o REC de um período fecha em loop perfeito
+  const tri = t01 < 0.5 ? t01 * 2 : 2 - t01 * 2;
+  const p = EASINGS[estado.motion].fn(tri);
   preset.tick(p, camera.position, alvoCam);
   camera.fov = preset.fov;
   camera.lookAt(alvoCam);
@@ -406,7 +484,8 @@ const rec = { gravador: null, pedacos: [], timer: 0, erro: null };
 function quadroAnim(agora) {
   requestAnimationFrame(quadroAnim);
   if (estado.pausa) { inicio += agora - pausadoEm; pausadoEm = agora; }
-  const t01 = ((agora - inicio) % PERIODO) / PERIODO;
+  const P = periodoAtual();
+  const t01 = ((agora - inicio) % P) / P;
   tAtual = t01;
 
   posicionaCamera(t01);
@@ -458,7 +537,7 @@ function comecaGravacao() {
     baixa(blob, nomeBase() + '.webm');
     rec.gravador = null;
     const btn = document.getElementById('btnRec');
-    btn.disabled = false; btn.textContent = 'REC 8S';
+    btn.disabled = false; btn.textContent = 'REC LOOP';
   };
   rec.gravador.start();
 }
@@ -470,14 +549,15 @@ function pedeGravacao() {
   const btn = document.getElementById('btnRec');
   btn.disabled = true; btn.textContent = 'GRAVANDO…';
 
-  const falta = PERIODO - ((performance.now() - inicio) % PERIODO);
+  const P = periodoAtual();
+  const falta = P - ((performance.now() - inicio) % P);
   rec.timer = setTimeout(() => {
     try { comecaGravacao(); } catch (e) { rec.erro = String(e); }
     rec.timer = setTimeout(() => {
       rec.timer = 0;
       if (rec.gravador?.state === 'recording') rec.gravador.stop();
-      else { btn.disabled = false; btn.textContent = 'REC 8S'; } // start falhou
-    }, PERIODO);
+      else { btn.disabled = false; btn.textContent = 'REC LOOP'; } // start falhou
+    }, P);
   }, falta);
 }
 
@@ -533,6 +613,28 @@ grupoExclusivo(
   Object.entries(CAMERAS).map(([k, c]) => [k, c.label]),
   estado.cam,
   (k) => { estado.cam = k; gravaUrl(); }
+);
+
+grupoExclusivo(
+  document.getElementById('grupoMotion'),
+  Object.entries(EASINGS).map(([k, e]) => [k, e.label]),
+  estado.motion,
+  (k) => { estado.motion = k; gravaUrl(); }
+);
+
+grupoExclusivo(
+  document.getElementById('grupoVel'),
+  Object.entries(VELOCIDADES).map(([k, v]) => [k, v.label]),
+  estado.vel,
+  (k) => {
+    // troca de andamento sem pulo: preserva a fase do loop
+    const agora = performance.now();
+    const Pvelho = periodoAtual();
+    const fase = ((agora - inicio) % Pvelho) / Pvelho;
+    estado.vel = k;
+    inicio = agora - fase * periodoAtual();
+    gravaUrl();
+  }
 );
 
 grupoExclusivo(
@@ -681,6 +783,7 @@ window.__poster = {
   run: () => ({
     arte: estado.arte, cam: estado.cam, fmt: estado.fmt,
     logo: estado.logo, logoCarregado: !!estado.logoImg, mapear: estado.mapear,
+    motion: estado.motion, vel: estado.vel, periodoMs: periodoAtual(),
     quadro: `${quadro.width}×${quadro.height}`,
     gl: `${gl.width}×${gl.height}`,
     artes: Object.keys(ARTES).length,

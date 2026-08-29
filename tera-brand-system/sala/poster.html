@@ -168,22 +168,28 @@ body {
 
   <header class="bar">
     <span><b>TÉRA</b> — SALA · POSTERS</span>
-    <span class="dica">A ARTE É PROJETADA EM TELA + TETO · SOLTE UMA IMAGEM PRA MAPEAR · O REC GRAVA UM LOOP DE 8 S</span>
+    <span class="dica">TRÊS PAREDES + TETO SÃO TELA · SOLTE UMA IMAGEM PRA MAPEAR · O REC GRAVA UM LOOP EXATO</span>
   </header>
 
   <footer class="painel">
     <div class="linha" id="linhaArtes">
       <span class="rotulo">ARTE</span>
     </div>
-    <div class="linha" id="linhaLogos">
+    <div class="linha">
       <span class="rotulo">LOGO</span>
+      <span id="linhaLogos" style="display:contents"></span>
+      <span style="flex:1"></span>
+      <span class="rotulo" style="width:auto">MAPEAR</span>
+      <span id="grupoMapear" style="display:contents"></span>
     </div>
     <div class="linha">
       <span class="rotulo">CÂMERA</span>
       <span id="grupoCams" style="display:contents"></span>
       <span style="flex:1"></span>
-      <span class="rotulo" style="width:auto">MAPEAR</span>
-      <span id="grupoMapear" style="display:contents"></span>
+      <span class="rotulo" style="width:auto">MOTION</span>
+      <span id="grupoMotion" style="display:contents"></span>
+      <span class="rotulo" style="width:auto">VEL</span>
+      <span id="grupoVel" style="display:contents"></span>
     </div>
     <div class="linha">
       <span class="rotulo">FORMATO</span>
@@ -195,7 +201,7 @@ body {
       <button id="btnCamada" aria-pressed="true" title="Camada técnica no frame">CAMADA</button>
       <button id="btnPausa" aria-pressed="false" title="Congela a câmera (espaço)">PAUSA</button>
       <button id="btnPng" class="acao" title="Baixa o quadro no formato atual">PNG</button>
-      <button id="btnRec" class="acao" title="Grava um loop de 8 s em WebM">REC 8S</button>
+      <button id="btnRec" class="acao" title="Grava exatamente um loop de câmera em WebM">REC LOOP</button>
     </div>
   </footer>
 
@@ -215,6 +221,6 @@ body {
 <script type="importmap">
 { "imports": { "three": "../areia/vendor/three.module.js" } }
 </script>
-<script type="module" src="poster-main.js?v=7"></script>
+<script type="module" src="poster-main.js?v=8"></script>
 </body>
 </html>
