@@ -6,17 +6,17 @@ o logo cheio é um registro do tempo que levou para enchê-lo.
 
 No ar: **[tera-areia.vercel.app](https://tera-areia.vercel.app)**
 
-Três labs sobre a mesma ideia, do mais simples ao mais bruto:
+Quatro labs sobre a mesma matéria, do mais simples ao mais bruto:
 
 | | arquivo | motor | matéria |
 |---|---|---|---|
 | **GPU** | `index.html` | WebGPU (compute shader) | 2 a 8 milhões de grãos |
 | **WebGL** | `3d.html` | Three.js | ~620 mil grãos |
 | **2D** | `2d.html` | Canvas 2D | ~200 mil grãos |
-| **Taipa** | `taipa.html` | Three.js + shader próprio | parede procedural, ~4 mil triângulos |
+| **Faceta** | `faceta.html` | Three.js + traçado de contorno | logo lapidado, ~700 triângulos |
 
-O WebGPU é a porta de entrada e as três versões ficam linkadas no topo de todas
-elas. Sem suporte a WebGPU, essa página oferece a versão WebGL, que roda em
+O WebGPU é a porta de entrada e as quatro versões ficam linkadas no topo de
+todas elas. Sem suporte a WebGPU, essa página oferece a versão WebGL, que roda em
 qualquer navegador.
 
 E três formas de máscara, trocáveis por `?forma=` ou pelos botões da barra:
@@ -71,12 +71,16 @@ ler a LUT. De graça, isso dá três coisas: a paleta rola para sempre (a anima�
 nunca acaba), cada camada de profundidade lê a paleta deslocada (o volume deixa
 de ser uma extrusão chapada), e nada disso custa um passo de simulação.
 
-**`taipa-main.js`** — o wordmark como parede de taipa digital: a máscara vira uma
-casca de quads (só as faces visíveis, extraídas em corridas), e TODO o material é
-um shader — altura → estrato, estrato → cor da paleta, grão de agregado, sombra
-de compactação na base de cada leva, costuras de luz entre camadas, uma varredura
-que sobe a parede e um glitch que corrompe uma camada por instante. Nada é
-textura de arquivo.
+**`faceta-main.js`** — o logo lapidado como objeto de metal escuro. O PNG é
+binarizado, o contorno é perseguido célula a célula (arestas dirigidas com o
+sólido sempre do mesmo lado — laços externos e furos fecham com sinais de área
+opostos, a classificação sai de graça) e simplificado por Douglas-Peucker: os
+degraus de pixel colapsam nas diagonais verdadeiras — o logo inteiro cabe em
+~60 vértices. Daí ExtrudeGeometry com bisel e um ambiente PMREM de painéis
+coloridos: as cores da paleta chegam nas faces como REFLEXO, não como tinta.
+Armadilha que custou uma rodada: o far plane padrão do `fromScene` é 100, e
+painéis mais distantes que isso são cortados — o ambiente sai preto e o metal
+também.
 
 **`wordmark.js`** resolve as três formas. A do cliente vem de um bitmap, não de
 um vetor — foi o que ele mandou. Isso exigiu corte por luminância (o PNG tem

@@ -5,7 +5,7 @@
 export const PARAMS = {
   // ---- tempo ----
   velocidade: {
-    group: 'tempo', label: 'Velocidade', min: 0.1, max: 4, step: 0.05, value: 1,
+    group: 'tempo', label: 'Velocidade', min: 0.1, max: 4, step: 0.05, value: 1, scope: '2d 3d gpu',
     unit: '×', hint: 'Multiplica os passos por segundo.',
   },
   fluxo: {
@@ -58,19 +58,18 @@ export const PARAMS = {
     hint: 'O vento arranca grãos já assentados e a duna migra. Custa caro — deixe em 0 se pesar.',
   },
   turbulencia: {
-    group: 'fisica', label: 'Turbulência', min: 0, max: 0.6, step: 0.01, value: 0.15, scope: 'gpu taipa',
-    hint: 'Cada camada de profundidade ganha uma corrente lateral própria. '
-      + 'Na taipa, vira a corrupção digital: quantas camadas leem com glitch.',
+    group: 'fisica', label: 'Turbulência', min: 0, max: 0.6, step: 0.01, value: 0.15, scope: 'gpu',
+    hint: 'Cada camada de profundidade ganha uma corrente lateral própria. É o que '
+      + 'faz a matéria do fundo se comportar diferente da matéria da frente.',
   },
   camada: {
-    group: 'fisica', label: 'Camada', min: 4, max: 200, step: 2, value: 48, scope: 'gpu taipa',
-    unit: ' px', hint: 'De quantas em quantas camadas a corrente inverte de lado. '
-      + 'Na taipa, a altura de cada leva socada.',
+    group: 'fisica', label: 'Camada', min: 4, max: 200, step: 2, value: 48, scope: 'gpu',
+    unit: ' px', hint: 'De quantas em quantas camadas a corrente inverte de lado.',
   },
   profundidade: {
-    group: 'fisica', label: 'Profundidade', min: 0, max: 40, step: 0.5, value: 12, scope: 'gpu taipa',
+    group: 'fisica', label: 'Profundidade', min: 0, max: 40, step: 0.5, value: 12, scope: 'gpu faceta',
     hint: 'Quanto a cor caminha na paleta a cada camada de profundidade. '
-      + 'Na taipa, a espessura da parede.',
+      + 'Na faceta, a espessura do bloco.',
   },
   direcao: {
     group: 'fisica', label: 'Direção', min: 0, max: 360, step: 5, value: 0, scope: '3d gpu',
@@ -87,7 +86,7 @@ export const PARAMS = {
     unit: ' px', hint: 'Raio do despejo no toque. 0 usa a espessura do traço.',
   },
   deriva: {
-    group: 'materia', label: 'Deriva', min: 0, max: 6, step: 0.1, value: 1.6,
+    group: 'materia', label: 'Deriva', min: 0, max: 6, step: 0.1, value: 1.6, scope: '2d 3d gpu',
     unit: '×', hint: 'Velocidade com que a cor caminha na paleta — desenha os estratos.',
   },
   semente: {
@@ -101,7 +100,7 @@ export const PARAMS = {
     unit: '%', hint: 'Fatia a rocha e mostra os estratos — cada camada é um instante do despejo.',
   },
   orbita: {
-    group: 'camera', label: 'Órbita', min: 0, max: 1, step: 0.05, value: 0.25, scope: '3d gpu taipa',
+    group: 'camera', label: 'Órbita', min: 0, max: 1, step: 0.05, value: 0.25, scope: '3d gpu faceta',
     unit: '×', hint: 'Giro automático da câmera. Arraste para conduzir; role para aproximar.',
   },
 };

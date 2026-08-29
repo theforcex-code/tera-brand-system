@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>TÉRA — Lab 02 · Areia 3D</title>
-<meta name="description" content="O wordmark Téra escoa de um plano de terra para o outro e vira rocha: cada camada de areia guarda a cor do instante em que caiu, e o corte revela o tempo gravado.">
+<title>TÉRA — Lab 02 · Areia · Faceta</title>
+<meta name="description" content="O logo facetado Téra como cristal 3D: o desenho lapidado extrudado em bloco, girando sob uma chave quente e reflexos da paleta nas faces.">
 <link rel="icon" href="favicon.png">
 <style>
-/* Lab 02 · Areia 3D. Dois planos de terra: o de cima tem o TÉRA vazado e escoa,
-   o de baixo recebe. A pilha vira rocha — cada estrato é um instante do despejo. */
+/* Lab 02 · Areia · Faceta. O logo lapidado como cristal: contorno extrudado com
+   bisel, girando sob uma chave quente — as cores da paleta chegam nas faces
+   como REFLEXO de ambiente, não como tinta. */
 
 /* dois src: o primeiro é a fonte do projeto, o segundo a cópia que viaja no
    deploy — o navegador cai para a segunda quando a primeira não existe */
@@ -34,14 +35,16 @@
   --grey: #4a4742;
   --biolum: #31C4FF;
   --pad: clamp(14px, 2.2vw, 28px);
-  --bar-h: 44px;                 /* altura real da barra inferior, medida em runtime */
+  --bar-h: 44px;
   --ease-seco: cubic-bezier(0.85, 0, 0.15, 1);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body { height: 100%; overflow: hidden; }
 body {
-  background: var(--subsolo);
+  /* o palco: um fundo com respiração, não um preto chapado — a luz da cena
+     parece vir de algum lugar */
+  background: radial-gradient(120% 90% at 50% 32%, #17130e 0%, #0A0908 56%, #050403 100%);
   color: var(--cal);
   font-family: 'Space Mono', ui-monospace, monospace;
   -webkit-font-smoothing: antialiased;
@@ -141,11 +144,20 @@ button:active { transform: translateY(1px); }
 .hint span { color: var(--grey); }
 .hint--off { opacity: 0; }
 
+.erro {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--cal);
+}
+
 /* descritor da marca: o mesmo texto do lockup, largo como o wordmark */
 .descritor {
   position: absolute;
   left: 50%;
-  top: 63%;
+  top: 76%;
   transform: translateX(-50%);
   color: var(--cal);
   font-weight: 700;
@@ -260,7 +272,7 @@ button:active { transform: translateY(1px); }
 }
 
 @media (hover: none) {
-  .hint__keys { display: none; }   /* atalhos de teclado não fazem sentido no toque */
+  .hint__keys { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -271,46 +283,36 @@ button:active { transform: translateY(1px); }
 <body>
 
 <main class="lab">
-  <canvas id="areia" aria-label="Wordmark Téra em areia 3D. Arraste para orbitar a rocha."></canvas>
+  <canvas id="areia" aria-label="Logo facetado Téra como cristal 3D. Arraste para girar."></canvas>
 
   <p class="descritor mono" id="descritor">Espetáculos multidimensionais</p>
 
   <p class="hint mono" id="hint">
-    arraste para girar em qualquer direção &nbsp;·&nbsp; role para aproximar<br>
-    <span>encher · o TÉRA se enche de areia</span><span class="hint__keys"> &nbsp;/&nbsp; A · ajustes &nbsp;/&nbsp; E · encher &nbsp;/&nbsp; D · descritor</span>
+    arraste para girar &nbsp;·&nbsp; role para aproximar &nbsp;·&nbsp; o cristal gira sozinho<br>
+    <span>a paleta reflete nas faces do corte</span><span class="hint__keys"> &nbsp;/&nbsp; A · ajustes &nbsp;/&nbsp; G · girar &nbsp;/&nbsp; D · descritor</span>
   </p>
 
+  <p class="erro mono" id="erro" hidden></p>
+
   <header class="bar bar--top mono">
-    <span class="bar__title"><b>TÉRA</b><i>·</i>Lab 02<i>·</i>Areia</span><span class="versoes"><a href="./">GPU</a><a href="3d.html" aria-current="page">WebGL</a><a href="2d.html">2D</a><a href="faceta.html">Faceta</a></span>
-    <span id="hud" aria-live="off">0 grãos · 0.0 s · rocha 0%</span>
+    <span class="bar__title"><b>TÉRA</b><i>·</i>Lab 02<i>·</i>Areia</span><span class="versoes"><a href="./">GPU</a><a href="3d.html">WebGL</a><a href="2d.html">2D</a><a href="faceta.html" aria-current="page">Faceta</a></span>
+    <span id="hud" aria-live="off">lapidando…</span>
   </header>
 
   <nav class="bar bar--bottom mono" aria-label="Controles">
     <div class="bar__controls">
-      <div class="group" role="group" aria-label="Forma">
-        <button type="button" data-forma="cliente" aria-pressed="false">Cliente</button>
-        <button type="button" data-forma="evoluido" aria-pressed="true">Evoluído</button>
-        <button type="button" data-forma="versal" aria-pressed="false">Versal</button>
-      </div>
       <div class="group" role="group" aria-label="Paleta">
         <button type="button" data-palette="plasma" aria-pressed="true" title="Espectro Plasma (P)">Plasma</button>
         <button type="button" data-palette="subsolo" aria-pressed="false" title="Estratos de terra (P)">Subsolo</button>
         <button type="button" data-palette="cal" aria-pressed="false" title="Branco Cal (P)">Cal</button>
       </div>
       <div class="group">
-        <button type="button" id="chuva" aria-pressed="false" title="Escoamento contínuo pelas letras (R)">Escoar</button>
-        <button type="button" id="encher" aria-pressed="false" title="Enche o TÉRA de areia na duração pedida (E)">Encher</button>
-      </div>
-      <div class="group">
-        <button type="button" id="pausa" aria-pressed="false" title="Pausa / segue (espaço) — ponto avança 1 passo">Pausa</button>
-        <button type="button" id="limpar" title="Desfaz a rocha e volta o relógio a zero (C)">Limpar</button>
+        <button type="button" id="girar" aria-pressed="true" title="Giro automático do cristal (G)">Girar</button>
       </div>
       <div class="group">
         <button type="button" id="png" title="Salvar imagem (S)">PNG</button>
-        <button type="button" id="gravar" aria-pressed="false" title="Grava a animação em WebM (G)">Rec</button>
         <button type="button" id="descritor-btn" aria-pressed="true" title="Mostra ou esconde o descritor da marca (D)">Descritor</button>
-        <button type="button" id="caixa" aria-pressed="false" title="Mostra ou esconde a caixa do volume (B)">Caixa</button>
-        <button type="button" id="ajustes" aria-pressed="false" title="Física, tempo e matéria (A)">Ajustes</button>
+        <button type="button" id="ajustes" aria-pressed="false" title="Espessura e órbita (A)">Ajustes</button>
       </div>
     </div>
   </nav>
@@ -319,6 +321,6 @@ button:active { transform: translateY(1px); }
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.js" } }
 </script>
-<script type="module" src="main3d.js?v=33"></script>
+<script type="module" src="faceta-main.js?v=33"></script>
 </body>
 </html>
