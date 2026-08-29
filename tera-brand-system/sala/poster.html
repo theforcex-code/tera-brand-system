@@ -54,7 +54,7 @@ body {
 /* o quadro: sempre na proporção do formato escolhido, letterbox no resto */
 #quadro {
   max-width: calc(100vw - 2 * var(--pad));
-  max-height: calc(100vh - 148px);
+  max-height: calc(100vh - 196px);
   box-shadow: 0 0 0 1px rgba(244,244,241,0.08), 0 30px 80px rgba(0,0,0,0.6);
   background: var(--preto);
 }
@@ -112,6 +112,40 @@ body {
 .painel input#inEstado { width: 76px; }
 .painel input:focus { outline: none; border-color: var(--fosforo); }
 
+/* painel de textos: uma gaveta acima do rodapé */
+#painelTextos {
+  position: absolute;
+  right: var(--pad);
+  bottom: 158px;
+  z-index: 4;
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  background: rgba(5,5,6,0.94);
+  border: 1px solid rgba(244,244,241,0.22);
+  border-radius: 14px;
+  min-width: 300px;
+}
+#painelTextos[hidden] { display: none; }
+#painelTextos label {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  align-items: center;
+  gap: 8px;
+  font-size: 9px; letter-spacing: 0.14em;
+  opacity: 0.9;
+}
+#painelTextos input {
+  font: 400 11px/1 'Space Mono', monospace;
+  color: var(--papel);
+  background: transparent;
+  border: 1px solid rgba(244,244,241,0.28);
+  border-radius: 8px;
+  padding: 7px 9px;
+  width: 100%;
+}
+#painelTextos input:focus { outline: none; border-color: var(--fosforo); }
+
 /* aviso de arrasto */
 #solta {
   position: absolute; inset: 0; z-index: 9;
@@ -141,29 +175,46 @@ body {
     <div class="linha" id="linhaArtes">
       <span class="rotulo">ARTE</span>
     </div>
-    <div class="linha" id="linhaCams">
+    <div class="linha" id="linhaLogos">
+      <span class="rotulo">LOGO</span>
+    </div>
+    <div class="linha">
       <span class="rotulo">CÂMERA</span>
+      <span id="grupoCams" style="display:contents"></span>
+      <span style="flex:1"></span>
+      <span class="rotulo" style="width:auto">MAPEAR</span>
+      <span id="grupoMapear" style="display:contents"></span>
     </div>
     <div class="linha">
       <span class="rotulo">FORMATO</span>
       <span id="grupoFmt" style="display:contents"></span>
       <span style="flex:1"></span>
-      <input id="inEstado" value="001" maxlength="3" aria-label="Número do estado" spellcheck="false">
-      <input id="inFrase" value="A TÉRA ABRE" maxlength="40" aria-label="Frase da arte" spellcheck="false">
+      <button id="btnImagem" title="Sobe uma imagem pra mapear (ou solte um arquivo na janela)">IMAGEM ↑</button>
+      <button id="btnTextos" aria-pressed="false" title="Edita todos os textos">TEXTOS</button>
       <button id="btnPessoa" aria-pressed="true" title="Silhueta de escala">PESSOA</button>
-      <button id="btnTexto" aria-pressed="true" title="Camada técnica no frame">TEXTO</button>
+      <button id="btnCamada" aria-pressed="true" title="Camada técnica no frame">CAMADA</button>
       <button id="btnPausa" aria-pressed="false" title="Congela a câmera (espaço)">PAUSA</button>
       <button id="btnPng" class="acao" title="Baixa o quadro no formato atual">PNG</button>
       <button id="btnRec" class="acao" title="Grava um loop de 8 s em WebM">REC 8S</button>
     </div>
   </footer>
 
+  <aside id="painelTextos" hidden aria-label="Textos do poster">
+    <label>FRASE <input id="inFrase" value="A TÉRA ABRE" maxlength="40" spellcheck="false"></label>
+    <label>ESTADO <input id="inEstado" value="001" maxlength="3" spellcheck="false"></label>
+    <label>SUP ESQ <input id="inSupEsq" maxlength="44" spellcheck="false"></label>
+    <label>SUP DIR <input id="inSupDir" maxlength="44" spellcheck="false"></label>
+    <label>INF ESQ <input id="inInfEsq" maxlength="44" spellcheck="false"></label>
+    <label>INF DIR <input id="inInfDir" maxlength="44" spellcheck="false"></label>
+  </aside>
+
+  <input id="arquivoImagem" type="file" accept="image/*" hidden>
   <div id="solta">SOLTA A IMAGEM<br>ELA VIRA O MAPPING DE TELA + TETO</div>
 </main>
 
 <script type="importmap">
 { "imports": { "three": "../areia/vendor/three.module.js" } }
 </script>
-<script type="module" src="poster-main.js?v=6"></script>
+<script type="module" src="poster-main.js?v=7"></script>
 </body>
 </html>

@@ -6,7 +6,36 @@
    WebM. O poster é uma foto da sala aberta. */
 
 import * as THREE from 'three';
-import { ARTES, CORES, UNFOLD, desenhaTera } from './poster-artes.js?v=2';
+import {
+  ARTES, CORES, UNFOLD, desenhaTera, MAPEAMENTOS, USA_MAPEAR,
+} from './poster-artes.js?v=3';
+
+/* o repertório de logos (brand/logo): monolines tingíveis + o matéria, que
+   é plasma e vai como é. FRESTA é o procedural — TERA bold com o acento
+   desenhado como a fresta. Proporções vêm do viewBox de cada arquivo. */
+const LOGOS = {
+  fresta: { label: 'FRESTA', src: null },
+  caps: { label: 'CAPS', src: '../brand/logo/tera_shape_caps.svg', aspecto: 587 / 308 },
+  ink: { label: 'INK', src: '../brand/logo/tera_ink_subsolo.svg', aspecto: 544.28 / 248 },
+  mono: { label: 'MONO T', src: '../brand/logo/tera_monogram_t_ink.svg', aspecto: 188 / 240 },
+  cliente: { label: 'CLIENTE', src: '../brand/logo/tera_shape_cliente.svg', aspecto: 540.28 / 281.58 },
+  materia: { label: 'MATÉRIA', src: '../brand/logo/tera_materia.svg', aspecto: 544.28 / 248, semTinta: true },
+};
+
+const logosCarregados = new Map(); // nome → Promise<Image>
+function carregaLogo(nome) {
+  const def = LOGOS[nome];
+  if (!def?.src) return Promise.resolve(null);
+  if (!logosCarregados.has(nome)) {
+    logosCarregados.set(nome, new Promise((res, rej) => {
+      const img = new Image();
+      img.onload = () => res(img);
+      img.onerror = () => rej(new Error(`logo ${nome} não carregou`));
+      img.src = def.src;
+    }));
+  }
+  return logosCarregados.get(nome);
+}
 
 /* ---------------------------------------------------------------- medidas */
 
@@ -33,19 +62,31 @@ const estado = {
   arte: ARTES[url.get('arte')] && url.get('arte') !== 'imagem' ? url.get('arte') : 'fresta',
   cam: url.get('cam') || 'frontal',
   fmt: FORMATOS[url.get('fmt')] ? url.get('fmt') : '4x5',
+  logo: LOGOS[url.get('logo')] ? url.get('logo') : 'fresta',
+  mapear: MAPEAMENTOS[url.get('mapear')] ? url.get('mapear') : 'cobrir',
   estado: (url.get('estado') || '001').slice(0, 3),
   frase: url.get('frase') || 'A TÉRA ABRE',
+  textos: {
+    supEsq: url.get('se') ?? 'TÉRA — MATA SÃO PAULO',
+    supDir: url.get('sd') ?? `ESTADO ${(url.get('estado') || '001').slice(0, 3)}`,
+    infEsq: url.get('ie') ?? 'TEMPORADA 01 — SET 2027',
+    infDir: url.get('id') ?? 'tera.art.br',
+  },
   pessoa: url.get('pessoa') !== '0',
-  texto: url.get('texto') !== '0',
+  texto: url.get('camada') !== '0',
   pausa: false,
-  imagem: null, // Image solta por drag & drop
+  imagem: null, // Image subida ou solta na janela
+  logoImg: null, // Image do logo escolhido (null = procedural)
 };
 
 function gravaUrl() {
   const p = new URLSearchParams({
     arte: estado.arte, cam: estado.cam, fmt: estado.fmt,
+    logo: estado.logo, mapear: estado.mapear,
     estado: estado.estado, frase: estado.frase,
-    pessoa: estado.pessoa ? '1' : '0', texto: estado.texto ? '1' : '0',
+    se: estado.textos.supEsq, sd: estado.textos.supDir,
+    ie: estado.textos.infEsq, id: estado.textos.infDir,
+    pessoa: estado.pessoa ? '1' : '0', camada: estado.texto ? '1' : '0',
   });
   history.replaceState(null, '', '?' + p.toString());
 }
@@ -177,6 +218,10 @@ function redesenhaArte() {
   const ctx = unfold.getContext('2d');
   ARTES[estado.arte].draw(ctx, {
     frase: estado.frase, estado: estado.estado, imagem: estado.imagem,
+    mapear: estado.mapear,
+    logoImg: estado.logoImg,
+    logoAspecto: LOGOS[estado.logo].aspecto,
+    logoTinta: !LOGOS[estado.logo].semTinta,
   });
 
   telaCanvas.getContext('2d')
@@ -288,11 +333,11 @@ function camadaTecnica(w, h) {
 
   ctxQ.textAlign = 'left';
   ctxQ.textBaseline = 'alphabetic';
-  ctxQ.fillText('TÉRA — MATA SÃO PAULO', m, m + fs * 0.6);
-  ctxQ.fillText('TEMPORADA 01 — SET 2027', m, h - mBaixo);
+  ctxQ.fillText(estado.textos.supEsq, m, m + fs * 0.6);
+  ctxQ.fillText(estado.textos.infEsq, m, h - mBaixo);
   ctxQ.textAlign = 'right';
-  ctxQ.fillText(`ESTADO ${estado.estado}`, w - m, m + fs * 0.6);
-  ctxQ.fillText('tera.art.br', w - m, h - mBaixo);
+  ctxQ.fillText(estado.textos.supDir, w - m, m + fs * 0.6);
+  ctxQ.fillText(estado.textos.infDir, w - m, h - mBaixo);
   ctxQ.letterSpacing = '0em';
 }
 
@@ -337,7 +382,7 @@ function aplicaFormato() {
 
 function encaixaQuadro() {
   const { w, h } = FORMATOS[estado.fmt];
-  const pad = 24, altoUi = 148;
+  const pad = 24, altoUi = 200;
   const escala = Math.min(
     (window.innerWidth - pad * 2) / w,
     (window.innerHeight - altoUi - pad) / h
@@ -458,19 +503,47 @@ function grupoExclusivo(pai, itens, atual, aoEscolher) {
   return botoes;
 }
 
-const linhaArtes = document.getElementById('linhaArtes');
 const botoesArte = grupoExclusivo(
-  linhaArtes,
-  Object.entries(ARTES).filter(([, a]) => !a.oculta).map(([k, a]) => [k, a.label]),
+  document.getElementById('linhaArtes'),
+  Object.entries(ARTES).map(([k, a]) => [k, a.label]),
   estado.arte,
   (k) => { estado.arte = k; redesenhaArte(); gravaUrl(); }
 );
+const pillImagem = botoesArte.get('imagem');
+pillImagem.style.display = 'none'; // aparece quando uma imagem subir
+pillImagem.title = 'A imagem que você subiu, mapeada na caixa';
 
 grupoExclusivo(
-  document.getElementById('linhaCams'),
+  document.getElementById('linhaLogos'),
+  Object.entries(LOGOS).map(([k, l]) => [k, l.label]),
+  estado.logo,
+  (k) => {
+    estado.logo = k;
+    carregaLogo(k).then((img) => {
+      if (estado.logo !== k) return; // já trocaram de novo
+      estado.logoImg = img;
+      redesenhaArte();
+    }).catch(() => { estado.logoImg = null; redesenhaArte(); });
+    gravaUrl();
+  }
+);
+
+grupoExclusivo(
+  document.getElementById('grupoCams'),
   Object.entries(CAMERAS).map(([k, c]) => [k, c.label]),
   estado.cam,
   (k) => { estado.cam = k; gravaUrl(); }
+);
+
+grupoExclusivo(
+  document.getElementById('grupoMapear'),
+  Object.entries(MAPEAMENTOS),
+  estado.mapear,
+  (k) => {
+    estado.mapear = k;
+    if (USA_MAPEAR.has(estado.arte)) redesenhaArte();
+    gravaUrl();
+  }
 );
 
 grupoExclusivo(
@@ -480,26 +553,76 @@ grupoExclusivo(
   (k) => { estado.fmt = k; aplicaFormato(); gravaUrl(); }
 );
 
-const inEstado = document.getElementById('inEstado');
-const inFrase = document.getElementById('inFrase');
-inEstado.value = estado.estado;
-inFrase.value = estado.frase;
+/* ------------------------------------------------------- painel de textos */
+
+const painelTextos = document.getElementById('painelTextos');
+const campos = {
+  frase: document.getElementById('inFrase'),
+  estado: document.getElementById('inEstado'),
+  supEsq: document.getElementById('inSupEsq'),
+  supDir: document.getElementById('inSupDir'),
+  infEsq: document.getElementById('inInfEsq'),
+  infDir: document.getElementById('inInfDir'),
+};
+campos.frase.value = estado.frase;
+campos.estado.value = estado.estado;
+campos.supEsq.value = estado.textos.supEsq;
+campos.supDir.value = estado.textos.supDir;
+campos.infEsq.value = estado.textos.infEsq;
+campos.infDir.value = estado.textos.infDir;
+
 let debounceArte = 0;
 function aoEditar() {
-  estado.estado = inEstado.value.trim() || '001';
-  estado.frase = inFrase.value.trim() || 'A TÉRA ABRE';
+  const estadoNovo = campos.estado.value.trim() || '001';
+  // o SUP DIR acompanha o número enquanto ninguém o personalizar
+  if (estadoNovo !== estado.estado && /^ESTADO\b/.test(estado.textos.supDir)) {
+    estado.textos.supDir = `ESTADO ${estadoNovo}`;
+    campos.supDir.value = estado.textos.supDir;
+  }
+  estado.estado = estadoNovo;
+  estado.frase = campos.frase.value.trim() || 'A TÉRA ABRE';
+  estado.textos.supEsq = campos.supEsq.value;
+  estado.textos.supDir = campos.supDir.value;
+  estado.textos.infEsq = campos.infEsq.value;
+  estado.textos.infDir = campos.infDir.value;
   clearTimeout(debounceArte);
   debounceArte = setTimeout(() => { redesenhaArte(); gravaUrl(); }, 250);
 }
-inEstado.addEventListener('input', aoEditar);
-inFrase.addEventListener('input', aoEditar);
+for (const campo of Object.values(campos)) campo.addEventListener('input', aoEditar);
+
+document.getElementById('btnTextos').addEventListener('click', (e) => {
+  painelTextos.hidden = !painelTextos.hidden;
+  e.currentTarget.setAttribute('aria-pressed', String(!painelTextos.hidden));
+});
+
+/* subir imagem: o botão e o arrastar caem no mesmo lugar */
+const arquivoImagem = document.getElementById('arquivoImagem');
+document.getElementById('btnImagem').addEventListener('click', () => arquivoImagem.click());
+arquivoImagem.addEventListener('change', () => {
+  if (arquivoImagem.files[0]) carregaArquivoImagem(arquivoImagem.files[0]);
+  arquivoImagem.value = '';
+});
+
+function carregaArquivoImagem(arq) {
+  if (!arq.type.startsWith('image/')) return;
+  const img = new Image();
+  img.onload = () => {
+    estado.imagem = img;
+    estado.arte = 'imagem';
+    pillImagem.style.display = '';
+    for (const [k, b] of botoesArte) b.setAttribute('aria-pressed', String(k === 'imagem'));
+    redesenhaArte();
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(arq);
+}
 
 document.getElementById('btnPessoa').addEventListener('click', (e) => {
   estado.pessoa = !estado.pessoa;
   e.currentTarget.setAttribute('aria-pressed', String(estado.pessoa));
   gravaUrl();
 });
-document.getElementById('btnTexto').addEventListener('click', (e) => {
+document.getElementById('btnCamada').addEventListener('click', (e) => {
   estado.texto = !estado.texto;
   e.currentTarget.setAttribute('aria-pressed', String(estado.texto));
   gravaUrl();
@@ -528,22 +651,18 @@ window.addEventListener('drop', (e) => {
   e.preventDefault();
   solta.classList.remove('ativo');
   const arq = e.dataTransfer?.files?.[0];
-  if (!arq || !arq.type.startsWith('image/')) return;
-  const img = new Image();
-  img.onload = () => {
-    estado.imagem = img;
-    estado.arte = 'imagem';
-    for (const [k, b] of botoesArte) b.setAttribute('aria-pressed', 'false');
-    redesenhaArte();
-    URL.revokeObjectURL(img.src);
-  };
-  img.src = URL.createObjectURL(arq);
+  if (arq) carregaArquivoImagem(arq);
 });
 
 /* ---------------------------------------------------------------- início */
 
 aplicaFormato();
 redesenhaArte(); // primeiro desenho com fonte de fallback…
+if (estado.logo !== 'fresta') {
+  carregaLogo(estado.logo)
+    .then((img) => { estado.logoImg = img; redesenhaArte(); })
+    .catch(() => {});
+}
 document.fonts.ready.then(() => {
   Promise.all([
     document.fonts.load("900 100px 'Archivo Exp'", 'TÉRA'),
@@ -556,13 +675,16 @@ requestAnimationFrame(quadroAnim);
 /* ---------------------------------------------------------------- QA hook */
 
 window.__poster = {
-  estado, FORMATOS, CAMERAS, ARTES, camera, scene, desenhaTera, rec,
+  estado, FORMATOS, CAMERAS, ARTES, LOGOS, MAPEAMENTOS, camera, scene, desenhaTera, rec,
   t: () => tAtual,
+  carregaArquivoImagem,
   run: () => ({
     arte: estado.arte, cam: estado.cam, fmt: estado.fmt,
+    logo: estado.logo, logoCarregado: !!estado.logoImg, mapear: estado.mapear,
     quadro: `${quadro.width}×${quadro.height}`,
     gl: `${gl.width}×${gl.height}`,
     artes: Object.keys(ARTES).length,
+    logos: Object.keys(LOGOS).length,
     cams: Object.keys(CAMERAS).length,
     recSuporte: typeof MediaRecorder !== 'undefined' &&
       ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']

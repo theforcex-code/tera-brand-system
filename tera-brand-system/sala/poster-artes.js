@@ -41,6 +41,49 @@ export function desenhaTera(ctx, x, yBase, px, corTipo, corFresta, fonte = EXP) 
   return ctx.measureText(texto).width;
 }
 
+/* ------------------------------------------------------------ logo à parte
+   O logo das artes pode ser o procedural (TERA + fresta, acima) ou um dos
+   SVGs monoline do repertório em brand/logo — tingidos na cor pedida via
+   source-in, já que vêm com fundo transparente. O matéria (plasma) passa
+   sem tinta. */
+
+const tintas = new Map(); // src|cor → canvas tingido
+
+function logoTingido(img, aspecto, cor) {
+  const chave = `${img.src}|${cor}`;
+  let cv = tintas.get(chave);
+  if (cv) return cv;
+  cv = document.createElement('canvas');
+  cv.width = 1600;
+  cv.height = Math.round(1600 / aspecto);
+  const c = cv.getContext('2d');
+  c.drawImage(img, 0, 0, cv.width, cv.height);
+  c.globalCompositeOperation = 'source-in';
+  c.fillStyle = cor;
+  c.fillRect(0, 0, cv.width, cv.height);
+  tintas.set(chave, cv);
+  return cv;
+}
+
+/* desenha o logo escolhido centrado em (cx, cy) com largura-alvo; devolve
+   a altura ocupada. hMax segura o logo dentro de uma região. */
+export function logoNoCanvas(ctx, o, cx, cy, wAlvo, cor, corFresta, hMax = 0) {
+  if (!o.logoImg) {
+    ctx.font = EXP(100);
+    const w100 = ctx.measureText('TERA').width;
+    let px = (100 * wAlvo) / w100;
+    if (hMax && px > hMax) { px = hMax; wAlvo = (px / 100) * w100; }
+    desenhaTera(ctx, cx - wAlvo / 2, cy + px * 0.36, px, cor, corFresta);
+    return px;
+  }
+  const aspecto = o.logoAspecto || 2;
+  let w = wAlvo, h = w / aspecto;
+  if (hMax && h > hMax) { h = hMax; w = h * aspecto; }
+  const fonte = o.logoTinta === false ? o.logoImg : logoTingido(o.logoImg, aspecto, cor);
+  ctx.drawImage(fonte, cx - w / 2, cy - h / 2, w, h);
+  return h;
+}
+
 /* uma linha que pode conter a palavra TÉRA (vira o wordmark com fresta) */
 function linhaComTera(ctx, texto, cx, yBase, px, corTipo, corFresta, fonte = EXP) {
   ctx.font = fonte(px);
@@ -201,11 +244,8 @@ function plano(ctx, o) {
   ctx.fillStyle = CORES.papel;
   ctx.fillRect(0, yA, W, hA);
 
-  // dentro da abertura, o wordmark
-  const px = 300;
-  ctx.font = EXP(px);
-  const wm = ctx.measureText('TERA').width;
-  desenhaTera(ctx, CX - wm / 2, yA + hA / 2 + px * 0.34, px, CORES.preto, CORES.fosforo);
+  // dentro da abertura, o logo escolhido
+  logoNoCanvas(ctx, o, CX, yA + hA / 2, W * 0.58, CORES.preto, CORES.fosforo, hA * 0.72);
 
   // a luz da abertura vaza pro teto
   const veu = ctx.createLinearGradient(0, FOLD, 0, 200);
@@ -248,21 +288,93 @@ function tecnica(ctx, o) {
   ctx.fillText('MÓDULO 0,48 M — 32 × 17 + 32 × 21', 72, Y_TELA(0.14) + 52);
   ctx.fillText('MATA SÃO PAULO — COMPLEXO MATARAZZO', 72, Y_TELA(0.14) + 96);
 
-  const px = 210;
-  ctx.font = EXP(px);
-  const wm = ctx.measureText('TERA').width;
-  desenhaTera(ctx, W - wm - 72, Y_TELA(0.88), px, CORES.papel, CORES.fosforo);
+  logoNoCanvas(ctx, o, W - 72 - W * 0.20, Y_TELA(0.80), W * 0.40, CORES.papel, CORES.fosforo, TELA * 0.30);
 }
 
-/* IMAGEM — o que você soltou vira o mapping inteiro (cover no desdobrado). */
+/* MARCA — o logo é o mapping: a marca em escala de sala, posicionada pelo
+   modo de mapeamento escolhido. */
+function marca(ctx, o) {
+  ctx.fillStyle = CORES.preto;
+  ctx.fillRect(0, 0, W, H);
+
+  const modo = o.mapear || 'cobrir';
+  if (modo === 'mosaico') {
+    const wTile = W / 5;
+    const hTile = wTile / (o.logoImg ? (o.logoAspecto || 2) : 2.9);
+    const passoY = hTile * 1.9;
+    let fila = 0;
+    for (let y = hTile; y < H + hTile; y += passoY, fila++) {
+      for (let x = wTile * 0.6 + (fila % 2 ? wTile * 0.55 : 0); x < W; x += wTile * 1.1) {
+        logoNoCanvas(ctx, o, x, y, wTile, CORES.papel, CORES.fosforo);
+      }
+    }
+  } else if (modo === 'dupla') {
+    logoNoCanvas(ctx, o, CX, Y_TELA(0.46), W * 0.7, CORES.papel, CORES.fosforo, TELA * 0.7);
+    logoNoCanvas(ctx, o, CX, FOLD * 0.5, W * 0.7, CORES.papel, CORES.fosforo, FOLD * 0.62);
+  } else if (modo === 'conter' || modo === 'sotela') {
+    logoNoCanvas(ctx, o, CX, Y_TELA(0.48), W * 0.82, CORES.papel, CORES.fosforo, TELA * 0.8);
+  } else { // cobrir e esticar: a marca cruza a dobra
+    logoNoCanvas(ctx, o, CX, FOLD, W * 0.94, CORES.papel, CORES.fosforo);
+  }
+}
+
+/* IMAGEM — o que você subiu, mapeado no desdobrado pelo modo escolhido. */
 function imagem(ctx, o) {
   ctx.fillStyle = CORES.preto;
   ctx.fillRect(0, 0, W, H);
   const img = o.imagem;
   if (!img) return;
-  const escala = Math.max(W / img.width, H / img.height);
-  const w = img.width * escala, h = img.height * escala;
-  ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+
+  const cobre = (dx, dy, dw, dh) => {
+    const s = Math.max(dw / img.width, dh / img.height);
+    const w = img.width * s, h = img.height * s;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(dx, dy, dw, dh); ctx.clip();
+    ctx.drawImage(img, dx + (dw - w) / 2, dy + (dh - h) / 2, w, h);
+    ctx.restore();
+  };
+
+  switch (o.mapear || 'cobrir') {
+    case 'conter': {
+      const s = Math.min(W / img.width, H / img.height);
+      const w = img.width * s, h = img.height * s;
+      ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+      break;
+    }
+    case 'esticar':
+      ctx.drawImage(img, 0, 0, W, H);
+      break;
+    case 'mosaico': {
+      const w = W / 4, h = (img.height / img.width) * w;
+      for (let y = 0; y < H; y += h)
+        for (let x = 0; x < W; x += w) ctx.drawImage(img, x, y, w, h);
+      break;
+    }
+    case 'sotela': {
+      cobre(0, FOLD, W, TELA);
+      // no teto, só o eco: a cor média da imagem vazando pela dobra
+      if (!img.__media) {
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = 1;
+        const c = cv.getContext('2d');
+        c.drawImage(img, 0, 0, 1, 1);
+        img.__media = c.getImageData(0, 0, 1, 1).data;
+      }
+      const [r, g, b] = img.__media;
+      const veu = ctx.createLinearGradient(0, FOLD, 0, 0);
+      veu.addColorStop(0, `rgba(${r},${g},${b},0.30)`);
+      veu.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = veu;
+      ctx.fillRect(0, 0, W, FOLD);
+      break;
+    }
+    case 'dupla':
+      cobre(0, FOLD, W, TELA);
+      cobre(0, 0, W, UNFOLD.TETO);
+      break;
+    default:
+      cobre(0, 0, W, H);
+  }
 }
 
 export const ARTES = {
@@ -270,6 +382,19 @@ export const ARTES = {
   estado: { label: 'ESTADO', luz: CORES.fosforo, draw: estado },
   statement: { label: 'STATEMENT', luz: CORES.papel, draw: statement },
   plano: { label: 'PLANO', luz: CORES.papel, draw: plano },
+  marca: { label: 'MARCA', luz: CORES.papel, draw: marca },
   tecnica: { label: 'TÉCNICA', luz: CORES.fosforo, draw: tecnica },
   imagem: { label: 'IMAGEM', luz: CORES.papel, draw: imagem, oculta: true },
+};
+
+/* quais artes escutam o modo de mapeamento */
+export const USA_MAPEAR = new Set(['marca', 'imagem']);
+
+export const MAPEAMENTOS = {
+  cobrir: 'COBRIR',
+  conter: 'CONTER',
+  esticar: 'ESTICAR',
+  mosaico: 'MOSAICO',
+  sotela: 'SÓ TELA',
+  dupla: 'DUPLA',
 };
