@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TÉRA — Sala · mockup 3D</title>
+<meta name="description" content="A sala de projeção Téra em 3D navegável: galpão 15,36 × 15,36 × 10,08 m, tela de fundo 15,36 × 8,16 m e teto-tela 15,36 × 10,08 m, com as cotas do mockup original.">
+<link rel="icon" href="../areia/favicon.png">
+<style>
+/* Sala · o mockup técnico que virou espaço. O desenho de cotas em vermelho
+   sobre branco, reconstruído como caixa navegável — e, no modo luz, a mesma
+   caixa apagada vira o território de projeção. */
+
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../case/fonts/SpaceMono-Regular.ttf?v=1') format('truetype'),
+       url('../areia/fonts/SpaceMono-Regular.ttf?v=1') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../case/fonts/SpaceMono-Bold.ttf?v=1') format('truetype'),
+       url('../areia/fonts/SpaceMono-Bold.ttf?v=1') format('truetype');
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --subsolo: #0A0908;
+  --cal: #F2EFE9;
+  --silver: #8d8a84;
+  --grey: #4a4742;
+  --biolum: #31C4FF;
+  --cota: #E8231A;
+  --pad: clamp(14px, 2.2vw, 28px);
+  --bar-h: 44px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: #F6F5F2;
+  color: var(--subsolo);
+  font-family: 'Space Mono', ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  transition: background 480ms ease, color 480ms ease;
+}
+body.luz {
+  background: radial-gradient(120% 90% at 50% 32%, #17130e 0%, #0A0908 56%, #050403 100%);
+  color: var(--cal);
+}
+
+.lab { position: fixed; inset: 0; }
+
+#sala {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+#sala:active { cursor: grabbing; }
+
+/* barra superior — o chrome dos labs */
+.bar {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: var(--bar-h);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--pad);
+  font-size: 11px; letter-spacing: 0.08em;
+  pointer-events: none;
+  z-index: 3;
+}
+.bar b { font-weight: 700; }
+.bar .medidas { opacity: 0.62; text-align: right; }
+@media (max-width: 720px) { .bar .medidas { display: none; } }
+
+/* rodapé: comandos */
+.hints {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  padding: 12px var(--pad);
+  font-size: 11px; letter-spacing: 0.06em;
+  z-index: 3;
+}
+.hints .teclas { opacity: 0.55; }
+@media (max-width: 720px) { .hints .teclas { display: none; } }
+
+.botoes { display: flex; gap: 8px; }
+.botoes button {
+  font: 700 11px/1 'Space Mono', monospace;
+  letter-spacing: 0.08em;
+  padding: 9px 13px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 999px;
+  opacity: 0.82;
+  transition: opacity 160ms ease, background 160ms ease, color 160ms ease;
+}
+.botoes button:hover { opacity: 1; }
+.botoes button[aria-pressed="true"] {
+  background: var(--subsolo); color: var(--cal); border-color: var(--subsolo);
+  opacity: 1;
+}
+body.luz .botoes button[aria-pressed="true"] {
+  background: var(--cal); color: var(--subsolo); border-color: var(--cal);
+}
+</style>
+</head>
+<body>
+
+<main class="lab">
+  <canvas id="sala" aria-label="Sala de projeção Téra em três dimensões, com cotas"></canvas>
+
+  <header class="bar">
+    <span><b>TÉRA</b> — SALA · MOCKUP 3D</span>
+    <span class="medidas">
+      TELA 15,36 × 8,16 · TETO 15,36 × 10,08 · GALPÃO 15,36 × 15,36 × 10,08 m
+    </span>
+  </header>
+
+  <footer class="hints">
+    <nav class="botoes" aria-label="Modos de visualização">
+      <button id="btnDiagrama" title="Voltar à vista do diagrama (D)">DIAGRAMA</button>
+      <button id="btnLuz" aria-pressed="false" title="Acender as telas (P)">LUZ</button>
+      <button id="btnCotas" aria-pressed="true" title="Mostrar/ocultar cotas (M)">COTAS</button>
+      <button id="btnGrade" aria-pressed="false" title="Grade de 1 m no piso (G)">GRADE</button>
+    </nav>
+    <span class="teclas">ARRASTAR ORBITA · SCROLL APROXIMA · D DIAGRAMA · P LUZ · M COTAS · G GRADE</span>
+  </footer>
+</main>
+
+<script type="importmap">
+{ "imports": { "three": "../areia/vendor/three.module.js" } }
+</script>
+<script type="module" src="main.js?v=2"></script>
+</body>
+</html>
