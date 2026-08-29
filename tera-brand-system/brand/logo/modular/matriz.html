@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>téra · Matriz Tipográfica</title>
+<meta name="description" content="A arquitetura da sala como matriz tipográfica: o esqueleto do téra é fixo e legível; chanfro, junta, fresta, vazio, apagado, sobreposição e grade são os parâmetros abertos.">
+<style>
+/* téra · Matriz — o instrumento da tipografia modular.
+
+   O feedback de 27.08 pede duas coisas que puxam em direções opostas:
+   identidade proprietária e legibilidade imediata. A resposta deste lab é
+   estrutural: o ESQUELETO da palavra é um só, fixo, testado — e tudo o que dá
+   personalidade (os elementos da sala: chanfro, junta, fresta, vazio, apagado,
+   sobreposição, grade) é parâmetro aberto. A régua de corpos pequenos fica
+   sempre à vista: nenhum ajuste escapa do teste de leitura. */
+
+:root {
+  --subsolo: #0A0908;
+  --cal: #F2EFE9;
+  --silver: #8d8a84;
+  --grey: #4a4742;
+  --biolum: #31C4FF;
+  --pad: clamp(14px, 2.2vw, 28px);
+  --ease-seco: cubic-bezier(0.85, 0, 0.15, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background: var(--subsolo);
+  color: var(--cal);
+  font-family: ui-monospace, 'Cascadia Mono', 'Space Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.mono { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.4; }
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--pad);
+  color: var(--silver);
+}
+header b { color: var(--cal); font-weight: 700; }
+header i { font-style: normal; color: var(--grey); margin: 0 0.6em; }
+
+main { flex: 1; display: flex; min-height: 0; }
+
+.palco {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 4vh, 44px);
+  padding: 0 var(--pad) var(--pad);
+  min-width: 0;
+}
+#espeleto { width: min(78%, 900px); }
+#espeleto svg { width: 100%; height: auto; display: block; }
+
+/* a régua de legibilidade: a MESMA palavra nos corpos que doem */
+.regua {
+  display: flex;
+  align-items: flex-end;
+  gap: clamp(16px, 3vw, 40px);
+  opacity: 0.92;
+}
+.regua figure { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.regua svg { display: block; height: var(--h); width: auto; }
+.regua figcaption { font-size: 9px; letter-spacing: 0.14em; color: var(--grey); }
+
+aside {
+  width: min(320px, 38vw);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px var(--pad) var(--pad);
+  border-left: 1px solid color-mix(in srgb, var(--cal) 10%, transparent);
+  color: var(--silver);
+}
+.grupo { margin-top: 18px; }
+.legenda { font-size: 10px; letter-spacing: 0.2em; color: var(--grey); margin-bottom: 8px; }
+
+.ctl { display: block; margin-bottom: 11px; }
+.ctl__head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ctl__nome { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; }
+.ctl__val { font-size: 10.5px; color: var(--cal); font-variant-numeric: tabular-nums; }
+.ctl input[type="range"] { appearance: none; width: 100%; height: 14px; margin-top: 4px; background: none; cursor: pointer; }
+.ctl input[type="range"]::-webkit-slider-runnable-track { height: 1px; background: color-mix(in srgb, var(--cal) 22%, transparent); }
+.ctl input[type="range"]::-moz-range-track { height: 1px; background: color-mix(in srgb, var(--cal) 22%, transparent); }
+.ctl input[type="range"]::-webkit-slider-thumb {
+  appearance: none; width: 9px; height: 9px; margin-top: -4px; border-radius: 50%;
+  background: var(--cal); transition: background 160ms var(--ease-seco), transform 160ms var(--ease-seco);
+}
+.ctl input[type="range"]::-moz-range-thumb { width: 9px; height: 9px; border: 0; border-radius: 50%; background: var(--cal); }
+.ctl input[type="range"]:hover::-webkit-slider-thumb { background: var(--biolum); transform: scale(1.25); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+button {
+  appearance: none; background: none; border: 1px solid color-mix(in srgb, var(--cal) 16%, transparent);
+  padding: 5px 9px 4px; color: var(--silver); font: inherit; font-size: 10px;
+  letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+  transition: color 160ms var(--ease-seco), border-color 160ms var(--ease-seco);
+}
+button:hover { color: var(--cal); }
+button[aria-pressed="true"] { color: var(--biolum); border-color: var(--biolum); }
+button:active { transform: translateY(1px); }
+
+.rodape { margin-top: 18px; padding-top: 12px; border-top: 1px solid color-mix(in srgb, var(--cal) 10%, transparent); display: flex; flex-wrap: wrap; gap: 4px; }
+
+@media (max-width: 760px) {
+  main { flex-direction: column; overflow-y: auto; }
+  aside { width: auto; border-left: 0; border-top: 1px solid color-mix(in srgb, var(--cal) 10%, transparent); }
+  #espeleto { width: 94%; }
+  body { overflow: auto; }
+}
+</style>
+</head>
+<body>
+
+<header class="mono">
+  <span><b>téra</b><i>·</i>Matriz Tipográfica<i>·</i>a arquitetura da sala com os parâmetros abertos</span>
+  <span id="hud"></span>
+</header>
+
+<main>
+  <section class="palco">
+    <div id="espeleto" aria-label="Wordmark téra na matriz modular"></div>
+    <div class="regua" id="regua" aria-label="Régua de legibilidade"></div>
+  </section>
+
+  <aside aria-label="Parâmetros da matriz">
+    <div class="grupo">
+      <div class="legenda">Presets</div>
+      <div class="chips" id="presets"></div>
+    </div>
+    <div class="grupo" id="controles"></div>
+    <div class="grupo">
+      <div class="legenda">Estado</div>
+      <div class="chips">
+        <button type="button" id="negativo" aria-pressed="false" title="A palavra é o que sobra depois do corte: bloco cheio, letra vazada">Negativo</button>
+        <button type="button" id="grade" aria-pressed="false" title="A malha de 1×1 da chapa gradeada corre por cima">Grade</button>
+      </div>
+    </div>
+    <div class="rodape">
+      <button type="button" id="svg">baixar svg</button>
+      <button type="button" id="link">copiar link</button>
+      <button type="button" id="zerar">zerar</button>
+    </div>
+  </aside>
+</main>
+
+<script type="module">
+/* ---------- o esqueleto: fixo, e é ele que garante a leitura ----------
+   Portado 1:1 de scripts/wordmark_modular.py — mesma régua em módulos u:
+   haste 2u, contraforma 3u, x-height 12u, ascendente 15u. O 'a' é de dois
+   andares de propósito: o de um andar lia "téro". */
+
+const STROKE = 2;
+const XTOP = 3;
+const BASE = 15;
+const GAP = 3;
+const PAD = 4;
+
+const GLYPHS = {
+  t: { w: 7, rects: [[2, 0, 2, 15], [0, 3, 6, 2], [4, 13, 3, 2]] },
+  e: { w: 8, rects: [[0, 3, 8, 2], [0, 3, 2, 12], [0, 8, 8, 2], [0, 13, 8, 2], [6, 3, 2, 5]] },
+  r: { w: 7, rects: [[0, 3, 2, 12], [0, 3, 7, 2], [5, 3, 2, 3]] },
+  a: { w: 9, rects: [[1, 3, 8, 2], [7, 3, 2, 12], [0, 8, 8, 2], [0, 8, 2, 7], [0, 13, 8, 2]] },
+};
+// acento agudo inclinado: um quadrado seria ambíguo
+const ACENTO = (x0) => [[x0 + 3.2, -2.6], [x0 + 5.4, -2.6], [x0 + 4.2, 0.4], [x0 + 2.0, 0.4]];
+
+/* ---------- parâmetros: cada um é um elemento da sala ---------- */
+
+const PARAMS = {
+  chanfro: { label: 'Chanfro', min: 0, max: 1, step: 0.05, value: 0,
+    hint: 'A curva que vira ângulo: canto convexo cortado a 45°.' },
+  junta: { label: 'Junta', min: 0, max: 0.4, step: 0.02, value: 0,
+    hint: 'A malha respira: cada módulo vira uma peça, como os gabinetes de LED.' },
+  fresta: { label: 'Fresta', min: 0, max: 2, step: 1, value: 0,
+    hint: 'O vão horizontal que atravessa a palavra inteira, em módulos.' },
+  nivel: { label: 'Altura da fresta', min: 4, max: 12, step: 1, value: 7,
+    hint: 'Onde o vão corta, contado do topo da x-height.' },
+  vazio: { label: 'Vazios', min: 0, max: 8, step: 1, value: 0,
+    hint: 'Vazios retangulares de 1 módulo abertos nos encontros de peças.' },
+  apagado: { label: 'Apagado', min: 0, max: 25, step: 1, value: 0,
+    hint: 'Pedaços apagados — módulos removidos pela semente.' },
+  sobrepor: { label: 'Sobreposição', min: 0, max: 3, step: 1, value: 0,
+    hint: 'As letras avançam umas sobre as outras; a interseção vira vazio.' },
+  semente: { label: 'Semente', min: 1, max: 99, step: 1, value: 7,
+    hint: 'Mesma semente + mesmos parâmetros = mesmo desenho.' },
+};
+
+const PRESETS = {
+  limpa: { label: 'Limpa', values: {} },
+  gradeada: { label: 'Gradeada', values: { junta: 0.16 } },
+  chanfrada: { label: 'Chanfrada', values: { chanfro: 0.55, junta: 0.08 } },
+  vao: { label: 'Vão', values: { fresta: 1, nivel: 7 } },
+  escavada: { label: 'Escavada', values: { vazio: 5, chanfro: 0.3, semente: 11 } },
+  apagada: { label: 'Apagada', values: { apagado: 12, semente: 23 } },
+  sobreposta: { label: 'Sobreposta', values: { sobrepor: 2, chanfro: 0.25 } },
+};
+
+const INK = '#F2EFE9';
+const VOID = '#0A0908';
+const U = 24;
+
+const q = new URLSearchParams(location.search);
+const values = {};
+for (const [k, p] of Object.entries(PARAMS)) {
+  const v = parseFloat(q.get(k));
+  values[k] = Number.isFinite(v) ? Math.min(p.max, Math.max(p.min, v)) : p.value;
+}
+const state = {
+  negativo: q.has('negativo'),
+  grade: q.has('grade'),
+};
+
+/* ---------- construção ---------- */
+
+function mulberry(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** A palavra como grade de células de 1 módulo. Cada célula sabe de que letra
+    veio — é isso que faz a sobreposição virar vazio onde duas letras disputam. */
+function buildCells() {
+  const letras = 'tera'.split('');
+  const shift = values.sobrepor;
+  const posX = [];
+  let x = 0;
+  for (let i = 0; i < letras.length; i++) {
+    posX.push(x - shift * i);
+    x += GLYPHS[letras[i]].w + GAP;
+  }
+  const width = posX[3] + GLYPHS.a.w;
+
+  const dona = new Map();          // "x,y" -> índice da letra (ou -2 = disputa)
+  letras.forEach((ch, i) => {
+    for (const [rx, ry, rw, rh] of GLYPHS[ch].rects) {
+      for (let cy = ry; cy < ry + rh; cy++) {
+        for (let cx = posX[i] + rx; cx < posX[i] + rx + rw; cx++) {
+          const k = `${cx},${cy}`;
+          if (dona.has(k) && dona.get(k) !== i) dona.set(k, -2);
+          else dona.set(k, i);
+        }
+      }
+    }
+  });
+
+  // a sobreposição carve: onde duas letras se encontram, a matéria abre
+  for (const [k, v] of dona) if (v === -2) dona.delete(k);
+
+  // a fresta: o vão horizontal atravessa a palavra inteira
+  if (values.fresta > 0) {
+    for (const k of [...dona.keys()]) {
+      const y = +k.split(',')[1];
+      if (y >= values.nivel && y < values.nivel + values.fresta) dona.delete(k);
+    }
+  }
+
+  const rng = mulberry(values.semente * 2654435761);
+
+  // vazios retangulares: só onde a célula está cercada — encontros de peças
+  if (values.vazio > 0) {
+    const solid = (cx, cy) => dona.has(`${cx},${cy}`);
+    const cheias = [...dona.keys()].filter((k) => {
+      const [cx, cy] = k.split(',').map(Number);
+      const nv = solid(cx - 1, cy) + solid(cx + 1, cy) + solid(cx, cy - 1) + solid(cx, cy + 1);
+      return nv >= 3;
+    });
+    for (let n = 0; n < values.vazio && cheias.length; n++) {
+      const i = Math.floor(rng() * cheias.length);
+      dona.delete(cheias.splice(i, 1)[0]);
+    }
+  }
+
+  // apagado: a matéria falha — mas nunca a ponto de outra palavra aparecer;
+  // quem decide o quanto é o olho, na régua de corpos pequenos
+  if (values.apagado > 0) {
+    const todas = [...dona.keys()];
+    const n = Math.floor(todas.length * values.apagado / 100);
+    for (let i = 0; i < n && todas.length; i++) {
+      const j = Math.floor(rng() * todas.length);
+      dona.delete(todas.splice(j, 1)[0]);
+    }
+  }
+
+  return { dona, width, posX };
+}
+
+/** Uma célula vira polígono com os cantos CONVEXOS chanfrados a 45° —
+    a "curva que vira ângulo" do brief, local e exata em qualquer célula. */
+function cellPath(cx, cy, c, solid) {
+  const x0 = cx * U;
+  const y0 = cy * U;
+  const x1 = x0 + U;
+  const y1 = y0 + U;
+  const k = c * U;
+  const up = solid(cx, cy - 1);
+  const dn = solid(cx, cy + 1);
+  const lf = solid(cx - 1, cy);
+  const rt = solid(cx + 1, cy);
+  const pts = [];
+  // canto NW
+  if (!up && !lf && k > 0) pts.push([x0, y0 + k], [x0 + k, y0]);
+  else pts.push([x0, y0]);
+  // canto NE
+  if (!up && !rt && k > 0) pts.push([x1 - k, y0], [x1, y0 + k]);
+  else pts.push([x1, y0]);
+  // canto SE
+  if (!dn && !rt && k > 0) pts.push([x1, y1 - k], [x1 - k, y1]);
+  else pts.push([x1, y1]);
+  // canto SW
+  if (!dn && !lf && k > 0) pts.push([x0 + k, y1], [x0, y1 - k]);
+  else pts.push([x0, y1]);
+  return pts;
+}
+
+/* ---------- render ---------- */
+
+function render() {
+  const { dona, width, posX } = buildCells();
+  const solid = (cx, cy) => dona.has(`${cx},${cy}`);
+  const top = -4;                                        // espaço do acento
+  const w = (width + PAD * 2) * U;
+  const h = (BASE - top + PAD * 2) * U;
+  const ox = PAD * U;
+  const oy = (PAD - top) * U;
+  const ink = state.negativo ? VOID : INK;
+  const bg = state.negativo ? INK : VOID;
+  const j = values.junta * U / 2;
+  const c = values.chanfro;
+
+  // traço da própria cor: células vizinhas soldam sem costura de antialiasing.
+  // com junta aberta o traço some — a separação ali é a intenção
+  const solda = j > 0 ? '' : ` stroke="${state.negativo ? VOID : INK}" stroke-width="0.8" stroke-linejoin="miter"`;
+
+  const parts = [];
+  for (const k of dona.keys()) {
+    const [cx, cy] = k.split(',').map(Number);
+    if (j > 0) {
+      // junta: cada célula recua — a palavra vira chapas com a emenda à vista.
+      // a junta só aparece ENTRE peças? não: entre módulos, que é a matriz
+      const pts = cellPath(cx, cy, c, solid).map(([px, py]) => {
+        const mx = cx * U + U / 2;
+        const my = cy * U + U / 2;
+        return [px + Math.sign(mx - px) * Math.min(j, Math.abs(mx - px)),
+          py + Math.sign(my - py) * Math.min(j, Math.abs(my - py))];
+      });
+      parts.push(`<polygon points="${pts.map((p) => p.map((v) => +v.toFixed(2)).join(',')).join(' ')}" fill="${ink}"/>`);
+    } else if (c > 0) {
+      const pts = cellPath(cx, cy, c, solid);
+      if (pts.length > 4) {
+        parts.push(`<polygon points="${pts.map((p) => p.map((v) => +v.toFixed(2)).join(',')).join(' ')}" fill="${ink}"${solda}/>`);
+      } else {
+        parts.push(`<rect x="${cx * U}" y="${cy * U}" width="${U}" height="${U}" fill="${ink}"${solda}/>`);
+      }
+    } else {
+      parts.push(`<rect x="${cx * U}" y="${cy * U}" width="${U}" height="${U}" fill="${ink}"${solda}/>`);
+    }
+  }
+
+  // o acento acompanha o 'e' (que anda com a sobreposição)
+  const ac = ACENTO(posX[1]);
+  parts.push(`<polygon points="${ac.map(([px, py]) => `${(px * U).toFixed(2)},${(py * U).toFixed(2)}`).join(' ')}" fill="${ink}"/>`);
+
+  // a grade da chapa gradeada, por cima de tudo
+  if (state.grade) {
+    const g = [];
+    const cor = state.negativo ? 'rgba(10,9,8,0.25)' : 'rgba(242,239,233,0.16)';
+    for (let gx = -PAD; gx <= width + PAD; gx++) {
+      g.push(`<line x1="${gx * U}" y1="${(top - PAD) * U}" x2="${gx * U}" y2="${(BASE + PAD) * U}"/>`);
+    }
+    for (let gy = top - PAD; gy <= BASE + PAD; gy++) {
+      g.push(`<line x1="${-PAD * U}" y1="${gy * U}" x2="${(width + PAD) * U}" y2="${gy * U}"/>`);
+    }
+    parts.push(`<g stroke="${cor}" stroke-width="1">${g.join('')}</g>`);
+  }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w.toFixed(0)} ${h.toFixed(0)}" role="img" aria-label="téra">`
+    + `<rect width="100%" height="100%" fill="${bg}"/>`
+    + `<g transform="translate(${ox},${oy})">${parts.join('')}</g></svg>`;
+
+  document.getElementById('espeleto').innerHTML = svg;
+
+  // a régua: a MESMA construção nos corpos que doem — se falhar aqui, falhou
+  const regua = document.getElementById('regua');
+  regua.innerHTML = [12, 18, 28, 48].map((px) => (
+    `<figure style="--h:${px}px">${svg}<figcaption>${px} px</figcaption></figure>`
+  )).join('');
+
+  document.getElementById('hud').textContent =
+    `${dona.size} módulos · ${width}×${BASE - top} u`;
+  return svg;
+}
+
+/* ---------- painel ---------- */
+
+const controles = document.getElementById('controles');
+const inputs = new Map();
+for (const [k, p] of Object.entries(PARAMS)) {
+  const row = document.createElement('label');
+  row.className = 'ctl';
+  row.title = p.hint;
+  const out = document.createElement('span');
+  out.className = 'ctl__val';
+  out.textContent = values[k];
+  const input = Object.assign(document.createElement('input'), {
+    type: 'range', min: p.min, max: p.max, step: p.step, value: values[k],
+  });
+  input.addEventListener('input', () => {
+    values[k] = Number(input.value);
+    out.textContent = input.value;
+    marcarPresets();
+    render();
+    syncUrl();
+  });
+  const head = document.createElement('span');
+  head.className = 'ctl__head';
+  const nome = document.createElement('span');
+  nome.className = 'ctl__nome';
+  nome.textContent = p.label;
+  head.append(nome, out);
+  row.append(head, input);
+  controles.append(row);
+  inputs.set(k, { input, out });
+}
+
+const presetsEl = document.getElementById('presets');
+for (const [id, pre] of Object.entries(PRESETS)) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.dataset.preset = id;
+  b.textContent = pre.label;
+  b.addEventListener('click', () => {
+    for (const [k, p] of Object.entries(PARAMS)) values[k] = pre.values[k] ?? p.value;
+    sync();
+    marcarPresets(id);
+  });
+  presetsEl.append(b);
+}
+
+function marcarPresets(forcado) {
+  const ativo = forcado ?? Object.entries(PRESETS).find(([, pre]) => (
+    Object.entries(PARAMS).every(([k, p]) => values[k] === (pre.values[k] ?? p.value))
+  ))?.[0];
+  presetsEl.querySelectorAll('[data-preset]').forEach((b) => {
+    b.setAttribute('aria-pressed', String(b.dataset.preset === ativo));
+  });
+}
+
+function sync() {
+  for (const [k, { input, out }] of inputs) {
+    input.value = values[k];
+    out.textContent = values[k];
+  }
+  render();
+  syncUrl();
+}
+
+let urlTimer = 0;
+function syncUrl() {
+  clearTimeout(urlTimer);
+  urlTimer = setTimeout(() => {
+    const p = new URLSearchParams();
+    for (const [k, def] of Object.entries(PARAMS)) {
+      if (values[k] !== def.value) p.set(k, String(values[k]));
+    }
+    if (state.negativo) p.set('negativo', '');
+    if (state.grade) p.set('grade', '');
+    const s = p.toString();
+    history.replaceState(null, '', s ? `?${s}` : location.pathname);
+  }, 300);
+}
+
+const toggle = (id, key) => {
+  const b = document.getElementById(id);
+  b.setAttribute('aria-pressed', String(state[key]));
+  b.addEventListener('click', () => {
+    state[key] = !state[key];
+    b.setAttribute('aria-pressed', String(state[key]));
+    render();
+    syncUrl();
+  });
+};
+toggle('negativo', 'negativo');
+toggle('grade', 'grade');
+
+document.getElementById('zerar').addEventListener('click', () => {
+  for (const [k, p] of Object.entries(PARAMS)) values[k] = p.value;
+  state.negativo = false;
+  state.grade = false;
+  document.getElementById('negativo').setAttribute('aria-pressed', 'false');
+  document.getElementById('grade').setAttribute('aria-pressed', 'false');
+  sync();
+  marcarPresets('limpa');
+});
+
+document.getElementById('svg').addEventListener('click', () => {
+  const svg = document.getElementById('espeleto').innerHTML;
+  const blob = new Blob([svg], { type: 'image/svg+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const marca = Object.entries(PARAMS)
+    .filter(([k, p]) => values[k] !== p.value)
+    .map(([k]) => `${k}${values[k]}`).join('-') || 'limpa';
+  a.download = `tera-matriz-${marca}.svg`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+});
+
+document.getElementById('link').addEventListener('click', async (e) => {
+  try {
+    await navigator.clipboard.writeText(location.href);
+    e.target.textContent = 'copiado';
+  } catch {
+    e.target.textContent = location.href;
+  }
+  setTimeout(() => { e.target.textContent = 'copiar link'; }, 1800);
+});
+
+marcarPresets();
+render();
+window.__matriz = { values, state, render, buildCells };
+</script>
+</body>
+</html>
