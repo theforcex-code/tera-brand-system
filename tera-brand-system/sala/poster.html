@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TÉRA — Sala · posters</title>
+<meta name="description" content="Sistema de posters pras redes: as artes da Téra projetadas na sala como mapping — tela e teto contínuos, câmera em movimento, export nos formatos sociais.">
+<link rel="icon" href="../areia/favicon.png">
+<style>
+/* Sala · posters. A caixa preta vira palco: as artes da marca projetadas em
+   tela + teto como um mapping, a câmera respira, e cada quadro sai no
+   formato da rede. O poster não é um layout: é uma foto da sala aberta. */
+
+@font-face {
+  font-family: 'Archivo Exp';
+  src: url('../case/fonts/Archivo-ExpBlack.ttf?v=1') format('truetype');
+  font-weight: 900; font-display: swap;
+}
+@font-face {
+  font-family: 'Archivo Cond';
+  src: url('../case/fonts/Archivo-CondBlack.ttf?v=1') format('truetype');
+  font-weight: 900; font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../case/fonts/SpaceMono-Regular.ttf?v=1') format('truetype');
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: 'Space Mono';
+  src: url('../case/fonts/SpaceMono-Bold.ttf?v=1') format('truetype');
+  font-weight: 700; font-display: swap;
+}
+
+:root {
+  --preto: #0A0A0C;
+  --papel: #F4F4F1;
+  --fosforo: #2CF5A0;
+  --pad: clamp(12px, 2vw, 24px);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: #050506;
+  color: var(--papel);
+  font-family: 'Space Mono', ui-monospace, monospace;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+.lab { position: fixed; inset: 0; display: grid; place-items: center; }
+
+/* o quadro: sempre na proporção do formato escolhido, letterbox no resto */
+#quadro {
+  max-width: calc(100vw - 2 * var(--pad));
+  max-height: calc(100vh - 148px);
+  box-shadow: 0 0 0 1px rgba(244,244,241,0.08), 0 30px 80px rgba(0,0,0,0.6);
+  background: var(--preto);
+}
+#gl { display: none; } /* o WebGL desenha escondido; o quadro composita */
+
+.bar {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 44px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--pad);
+  font-size: 11px; letter-spacing: 0.08em;
+  z-index: 3; pointer-events: none;
+  color: rgba(244,244,241,0.85);
+}
+.bar b { font-weight: 700; }
+.bar .dica { opacity: 0.5; }
+@media (max-width: 860px) { .bar .dica { display: none; } }
+
+/* painel de controle */
+.painel {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 10px var(--pad) 14px;
+  z-index: 3;
+  background: linear-gradient(to top, rgba(5,5,6,0.92), rgba(5,5,6,0));
+}
+.linha {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.linha .rotulo {
+  font-size: 10px; letter-spacing: 0.14em; opacity: 0.45; width: 64px;
+  flex: none;
+}
+.painel button, .painel input {
+  font: 700 11px/1 'Space Mono', monospace;
+  letter-spacing: 0.06em;
+  color: var(--papel);
+  background: transparent;
+  border: 1px solid rgba(244,244,241,0.28);
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+}
+.painel button:hover { border-color: rgba(244,244,241,0.7); }
+.painel button[aria-pressed="true"] {
+  background: var(--papel); color: var(--preto); border-color: var(--papel);
+}
+.painel button.acao { border-color: var(--fosforo); color: var(--fosforo); }
+.painel button.acao:hover { background: var(--fosforo); color: var(--preto); }
+.painel button.acao[disabled] { opacity: 0.5; cursor: wait; }
+.painel input {
+  cursor: text; width: 200px; font-weight: 400;
+}
+.painel input#inEstado { width: 76px; }
+.painel input:focus { outline: none; border-color: var(--fosforo); }
+
+/* aviso de arrasto */
+#solta {
+  position: absolute; inset: 0; z-index: 9;
+  display: none; place-items: center;
+  background: rgba(5,5,6,0.82);
+  border: 2px dashed var(--fosforo);
+  color: var(--fosforo);
+  font: 700 14px/1.6 'Space Mono', monospace;
+  letter-spacing: 0.12em;
+  text-align: center;
+}
+#solta.ativo { display: grid; }
+</style>
+</head>
+<body>
+
+<main class="lab">
+  <canvas id="gl"></canvas>
+  <canvas id="quadro" aria-label="Poster da Téra: a sala com a arte projetada"></canvas>
+
+  <header class="bar">
+    <span><b>TÉRA</b> — SALA · POSTERS</span>
+    <span class="dica">A ARTE É PROJETADA EM TELA + TETO · SOLTE UMA IMAGEM PRA MAPEAR · O REC GRAVA UM LOOP DE 8 S</span>
+  </header>
+
+  <footer class="painel">
+    <div class="linha" id="linhaArtes">
+      <span class="rotulo">ARTE</span>
+    </div>
+    <div class="linha" id="linhaCams">
+      <span class="rotulo">CÂMERA</span>
+    </div>
+    <div class="linha">
+      <span class="rotulo">FORMATO</span>
+      <span id="grupoFmt" style="display:contents"></span>
+      <span style="flex:1"></span>
+      <input id="inEstado" value="001" maxlength="3" aria-label="Número do estado" spellcheck="false">
+      <input id="inFrase" value="A TÉRA ABRE" maxlength="40" aria-label="Frase da arte" spellcheck="false">
+      <button id="btnPessoa" aria-pressed="true" title="Silhueta de escala">PESSOA</button>
+      <button id="btnTexto" aria-pressed="true" title="Camada técnica no frame">TEXTO</button>
+      <button id="btnPausa" aria-pressed="false" title="Congela a câmera (espaço)">PAUSA</button>
+      <button id="btnPng" class="acao" title="Baixa o quadro no formato atual">PNG</button>
+      <button id="btnRec" class="acao" title="Grava um loop de 8 s em WebM">REC 8S</button>
+    </div>
+  </footer>
+
+  <div id="solta">SOLTA A IMAGEM<br>ELA VIRA O MAPPING DE TELA + TETO</div>
+</main>
+
+<script type="importmap">
+{ "imports": { "three": "../areia/vendor/three.module.js" } }
+</script>
+<script type="module" src="poster-main.js?v=6"></script>
+</body>
+</html>
