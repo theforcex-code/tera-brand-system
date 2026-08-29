@@ -19,11 +19,12 @@ O WebGPU é a porta de entrada e as quatro versões ficam linkadas no topo de
 todas elas. Sem suporte a WebGPU, essa página oferece a versão WebGL, que roda em
 qualquer navegador.
 
-E três formas de máscara, trocáveis por `?forma=` ou pelos botões da barra:
+E quatro formas de máscara, trocáveis por `?forma=` ou pelos botões da barra:
 
 - `cliente` — o desenho original que o cliente mandou, com o "e" invertido
 - `evoluido` — o wordmark do sistema, com o "e" redesenhado (padrão)
-- `versal` — TÉRA em caixa alta bold, a forma que mais segura areia
+- `facetado` — o logo lapidado, dobras de 45 e 60 graus (o mesmo do lab Faceta)
+- `versal` — TÉRA em caixa alta bold
 
 ## Rodar
 
@@ -82,10 +83,10 @@ Armadilha que custou uma rodada: o far plane padrão do `fromScene` é 100, e
 painéis mais distantes que isso são cortados — o ambiente sai preto e o metal
 também.
 
-**`wordmark.js`** resolve as três formas. A do cliente vem de um bitmap, não de
-um vetor — foi o que ele mandou. Isso exigiu corte por luminância (o PNG tem
-fundo branco opaco, então testar alfa aceitaria a folha inteira) e o viewBox
-medido na caixa da tinta, para as três formas entrarem na mesma escala.
+**`wordmark.js`** resolve as quatro formas. Duas vêm de bitmap, e em polaridades
+opostas — o logo do cliente é preto sobre branco, o facetado é branco sobre
+preto. A tinta é o que DIFERE do fundo medido nas bordas da imagem, não "o que é
+escuro"; o viewBox é a caixa da tinta, para todas entrarem na mesma escala.
 
 ## Parâmetros
 

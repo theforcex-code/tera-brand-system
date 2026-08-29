@@ -1,6 +1,6 @@
 /* Lab 02 · Areia — o wordmark como máscara da grade de simulação.
 
-   Três formas, e elas não vêm da mesma matéria:
+   Quatro formas, e elas não vêm da mesma matéria:
 
    · CLIENTE é o arquivo original que o cliente mandou — e ele mandou um PNG,
      não um vetor. Reconstruir aquele desenho em arcos dá o gesto certo mas não
@@ -9,8 +9,10 @@
      cliente, com o "e" invertido de bico e cauda.
    · EVOLUÍDO é o wordmark do sistema (scripts/wordmark_arcos.py): mesma
      gramática de um raio e uma espessura, com o "e" redesenhado para legibilidade.
+   · FACETADO é o logo lapidado que o cliente mandou depois — dobras de 45 e
+     60 graus, letras cheias; o mesmo desenho que o lab Faceta extruda em 3D.
    · VERSAL é o TÉRA em caixa alta bold, na mesma régua e com o traço quase
-     dobrado — é a forma que mais segura areia por letra.
+     dobrado.
 
    Quem consome só precisa de loadWordmark(forma) -> fitWordmark -> rasterizeWordmark;
    a diferença entre vetor e bitmap morre dentro deste módulo. */
@@ -29,6 +31,12 @@ export const SHAPES = {
     hint: 'O wordmark do sistema, com o "e" redesenhado',
     kind: 'vector',
     urls: ['../brand/logo/tera_ink_subsolo.svg', 'logo/tera_ink_subsolo.svg'],
+  },
+  facetado: {
+    label: 'Facetado',
+    hint: 'O logo lapidado — dobras de 45 e 60 graus, letras cheias',
+    kind: 'raster',
+    urls: ['../brand/logo/tera_facetado.png', 'logo/tera_facetado.png'],
   },
   versal: {
     label: 'Versal',
@@ -89,7 +97,10 @@ const FALLBACK = {
    o bitmap precisa da mesma folga relativa, senão o logo do cliente entraria na
    caixa de areia num tamanho diferente do das outras duas formas. */
 const CLEARSPACE = 0.087;
-const TINTA = 140;        // limiar de luminância: abaixo disto é traço
+/* Tinta é o que DIFERE do fundo, não o que é escuro: o logo do cliente é preto
+   sobre branco, o facetado é branco sobre preto — o fundo é medido nas bordas
+   da imagem e ninguém aqui precisa saber qual é qual. */
+const DIFF_TINTA = 90;
 
 /** Lê o SVG e extrai viewBox, path e espessura. */
 async function loadVector(urls) {
@@ -139,6 +150,19 @@ function medirBitmap(img) {
   ctx.drawImage(img, 0, 0);
   const px = ctx.getImageData(0, 0, cv.width, cv.height).data;
 
+  const lum = (i) => 0.299 * px[i] + 0.587 * px[i + 1] + 0.114 * px[i + 2];
+  let acc = 0;
+  let nb = 0;
+  for (let x = 0; x < cv.width; x++) {
+    acc += lum(x << 2) + lum(((cv.height - 1) * cv.width + x) << 2);
+    nb += 2;
+  }
+  for (let y = 0; y < cv.height; y++) {
+    acc += lum((y * cv.width) << 2) + lum(((y * cv.width) + cv.width - 1) << 2);
+    nb += 2;
+  }
+  const fundo = acc / nb;
+
   let x0 = cv.width;
   let y0 = cv.height;
   let x1 = -1;
@@ -148,7 +172,7 @@ function medirBitmap(img) {
     let corrida = 0;
     for (let x = 0; x <= cv.width; x++) {          // um passo além: fecha a corrida da borda
       const i = (y * cv.width + x) << 2;
-      const tinta = x < cv.width && px[i + 3] > 128 && px[i] < TINTA;
+      const tinta = x < cv.width && px[i + 3] > 128 && Math.abs(lum(i) - fundo) > DIFF_TINTA;
       if (tinta) {
         corrida++;
         if (x < x0) x0 = x;
@@ -171,6 +195,7 @@ function medirBitmap(img) {
   return {
     viewBox: [x0 - pad, y0 - pad, w + 2 * pad, h + 2 * pad],
     strokeWidth: moda,
+    fundo,
   };
 }
 
@@ -281,10 +306,16 @@ export function rasterizeWordmark(wm, w, h, fit) {
   let y0 = h;
   let x1 = -1;
   let y1 = -1;
-  // no vetor o traço é branco sobre transparente; no bitmap do cliente o fundo
-  // é BRANCO OPACO, e alpha sozinho aceitaria a folha inteira como letra
+  // no vetor o traço é branco sobre transparente; no bitmap o fundo é OPACO
+  // (branco no logo do cliente, preto no facetado) e alpha sozinho aceitaria a
+  // folha inteira como letra — a tinta é o que difere do fundo medido
   const eTinta = wm.kind === 'raster'
-    ? (i) => px[(i << 2) | 3] > 128 && px[i << 2] < TINTA
+    ? (i) => {
+      const j = i << 2;
+      if (px[j | 3] <= 128) return false;
+      const l = 0.299 * px[j] + 0.587 * px[j | 1] + 0.114 * px[j | 2];
+      return Math.abs(l - wm.fundo) > DIFF_TINTA;
+    }
     : (i) => px[(i << 2) | 3] >= 128;
   for (let i = 0; i < inside.length; i++) {
     if (!eTinta(i)) continue;

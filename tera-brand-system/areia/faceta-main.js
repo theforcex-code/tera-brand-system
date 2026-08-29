@@ -13,9 +13,9 @@
    As paletas viram humores de matéria: Plasma é vidro negro refletindo as
    quatro cores; Subsolo é obsidiana de terra; Cal é porcelana. */
 
-import { PALETTES, hexToRgb } from './palette.js?v=33';
-import { fromSearch, toSearch } from './params.js?v=33';
-import { Panel } from './panel.js?v=33';
+import { PALETTES, hexToRgb } from './palette.js?v=34';
+import { fromSearch, toSearch } from './params.js?v=34';
+import { Panel } from './panel.js?v=34';
 import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
 

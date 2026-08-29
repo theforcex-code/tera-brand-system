@@ -15,12 +15,12 @@
 import {
   loadWordmark, fitWordmark, rasterizeWordmark,
   shapeFromSearch, wireShapeButtons, DEFAULT_SHAPE,
-} from './wordmark.js?v=33';
-import { PALETTES, buildLut } from './palette.js?v=33';
-import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=33';
-import { OrbitCamera } from './gpu/camera.js?v=33';
-import { fromSearch, toSearch } from './params.js?v=33';
-import { Panel } from './panel.js?v=33';
+} from './wordmark.js?v=34';
+import { PALETTES, buildLut } from './palette.js?v=34';
+import { SandGPU, WALL, EMPTY } from './gpu/sand-gpu.js?v=34';
+import { OrbitCamera } from './gpu/camera.js?v=34';
+import { fromSearch, toSearch } from './params.js?v=34';
+import { Panel } from './panel.js?v=34';
 
 /* Perfis de custo. A versão anterior enchia 13,5 milhões de grãos e desenhava
    TODOS a cada quadro — numa tela de 1,2 milhão de pixels, isso é ~11 grãos por
